@@ -1,9 +1,8 @@
+// Load scoped modules.
+import BaseError from '@player1os/base-error'
+
 // Load npm modules.
 import _ from 'lodash'
-
-// Load app modules.
-import EntityNotFoundError from '#/src/common/error/entity_not_found'
-import EntityExistsError from '#/src/common/error/entity_exists'
 
 // Expose the base model object.
 export default {
@@ -11,6 +10,21 @@ export default {
 	extend(model) {
 		// Setup the prototype chain.
 		Object.setPrototypeOf(model, this)
+
+		// Verify whether a knex instance is set.
+		if (!model.knex) {
+			throw new Error('No knex instance was set in the model.')
+		}
+
+		// Verify whether a table name is set.
+		if (!model.table) {
+			throw new Error('No table name was set in the model.')
+		}
+
+		// Verify whether a fields object is set.
+		if (!model.fields) {
+			throw new Error('No fields object was set in the model.')
+		}
 
 		// Pass the extended model to the caller.
 		return model
