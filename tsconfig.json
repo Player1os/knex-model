@@ -1,0 +1,31 @@
+{
+	"awesomeTypescriptLoaderOptions": {
+		"useBabel": true,
+		"useCache": true
+	},
+	"compilerOptions": {
+		"baseUrl": ".",
+		"module": "commonjs",
+		"noImplicitAny": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"paths": {
+			"*": [
+				"*"
+			],
+			"#/*": [
+				"./*"
+			]
+		},
+		"sourceMap": true,
+		"target": "es2017",
+		"typeRoots": [
+			"node_modules/@types"
+		]
+	},
+	"exclude": [
+		"build",
+		"lib",
+		"node_modules"
+	]
+}

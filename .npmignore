@@ -1,1 +1,14 @@
-/src/
+.awcache/
+.vscode/
+build/
+src/
+task/
+test/
+webpack/
+.babelrc
+.editorconfig
+.gitattributes
+.gitignore
+.node-version
+tsconfig.json
+tslint.json

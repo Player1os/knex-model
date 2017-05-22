@@ -3,9 +3,26 @@
   "version": "1.0.0",
   "description": "A a base class for models built on top of the knex query builder",
   "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "engines": {
+    "node": "~6.9.3",
+    "npm": "~3.10.10"
+  },
   "scripts": {
-    "prepublish": "babel src --out-dir lib",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preversion": "npm run lint && npm run build && npm test && publish:copy_to_lib && npm run publish:merge_repo_to_master",
+    "postversion": "git push && git push --tags",
+    "build": "npm run build:lib && npm run build:test",
+    "build:lib": "webpack --config webpack/lib.ts",
+    "build:lib:watch": "npm run build:lib -- --watch",
+    "build:test": "webpack --config webpack/test.ts",
+    "build:test:watch": "npm run build:test -- --watch",
+    "lint": "tslint {./,src/**/,task/**/,test/**/,webpack/**/}*.ts --type-check --project ./tsconfig.json",
+    "lint:watch": "chokidar src/**/*.ts task/**/*.ts test/**/*.ts webpack/**/*.ts -c \"npm run lint\" --initial --silent",
+    "publish:copy_to_lib": "mkdirp lib && cp build/types/src/index.d.ts lib/ && cp build/lib/* lib/",
+    "publish:merge_repo_to_master": "npm run ts-node task/publish/merge_repo_to_master.ts",
+    "test": "mocha -c --full-trace --no-exit --no-timeouts build/test/index.test.js",
+    "test:watch": "npm test -- -w",
+    "ts-node": "ts-node -O \"{\\\"target\\\":\\\"es2015\\\"}\" -r module-alias/register"
   },
   "repository": {
     "type": "git",
@@ -21,12 +38,36 @@
     "url": "https://github.com/Player1os/node-js-knex-model/issues"
   },
   "homepage": "https://github.com/Player1os/node-js-knex-model#readme",
+  "devDependencies": {
+    "@types/bluebird-global": "^3.5.2",
+    "@types/chai": "^3.5.2",
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.18",
+    "@types/webpack": "^2.2.15",
+    "@types/webpack-env": "^1.13.0",
+    "awesome-typescript-loader": "^3.1.3",
+    "babel-core": "^6.24.1",
+    "babel-preset-env": "^1.4.0",
+    "bluebird": "^3.5.0",
+    "chai": "^3.5.0",
+    "chokidar": "^1.7.0",
+    "git-rev": "^0.2.1",
+    "mkdirp": "^0.5.1",
+    "mocha": "^3.4.1",
+    "module-alias": "^2.0.0",
+    "spawn-process-promise": "^1.0.2",
+    "ts-node": "^3.0.4",
+    "tslint": "^5.2.0",
+    "tslint-config-airbnb": "^5.0.1",
+    "tsutils": "=1.6.0",
+    "typescript": "^2.3.2",
+    "uglify-js": "^3.0.10",
+    "webpack": "^2.5.1"
+  },
   "dependencies": {
     "lodash": "^4.17.4"
   },
-  "devDependencies": {
-    "babel-cli": "^6.24.1",
-    "babel-core": "^6.24.1",
-    "babel-preset-env": "^1.4.0"
+  "_moduleAliases": {
+    "#": "."
   }
 }
