@@ -1,8 +1,15 @@
 // Load scoped modules.
-import BaseError from '@player1os/base-error'
+import EntityExistsError from '#/src/error/entity_exists'
+import EntityNotFoundError from '#/src/error/entity_not_found'
 
 // Load npm modules.
-import _ from 'lodash'
+import * as lodash from 'lodash'
+
+// Expose the error classes.
+export {
+	EntityExistsError,
+	EntityNotFoundError,
+}
 
 // Expose the base model object.
 export default {
@@ -66,7 +73,9 @@ export default {
 		}
 	},
 	// Find all entities of the model matching the query.
-	async find(query, options = {}) {
+	async find(query, options = {
+		orderBy: null,
+	}) {
 		// TODO: Add.
 		/*
 		// Validate query.
@@ -171,7 +180,7 @@ export default {
 		// Update the entity with the given document key using the given document values.
 		const documents = await this.update({
 			key: document.key,
-		}, dataType.object.shallowFilter(document, this.fieldNames()))
+		}, lodash.pick(document, this.fieldNames()))
 
 		// Return the first retrieved document.
 		return documents[0]
