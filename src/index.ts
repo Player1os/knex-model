@@ -95,7 +95,7 @@ export default {
 			*/
 
 			// Insert values into the underlying data object.
-			const documents = await this.knex(this.table)
+			const documents = await this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
 
@@ -123,7 +123,7 @@ export default {
 		*/
 
 		// Select values from the underlying data object.
-		let knexQuery = this.knex(this.table)
+		let knexQuery = this.knexWrapper.instance(this.table)
 			.select(this.fieldNames(true))
 			.where(query || {})
 
@@ -149,7 +149,7 @@ export default {
 		*/
 
 		// Select values from the underlying data object.
-		const documents = await this.knex(this.table)
+		const documents = await this.knexWrapper.instance(this.table)
 			.select(this.fieldNames(true))
 			.where(query || {})
 			// Limit to a single row.
@@ -172,7 +172,7 @@ export default {
 		*/
 
 		// Select the count from the underlying data object.
-		const result = await this.knex(this.table)
+		const result = await this.knexWrapper.instance(this.table)
 			.count()
 			.where(query || {})
 
@@ -191,7 +191,7 @@ export default {
 		*/
 
 		// Update values in the underlying data object.
-		const documents = await this.knex(this.table)
+		const documents = await this.knexWrapper.instance(this.table)
 			.update(values)
 			.where(query || {})
 			.returning(this.fieldNames(true))
@@ -208,7 +208,7 @@ export default {
 		*/
 
 		// Delete rows from the underlying data object.
-		const documents = await this.knex(this.table)
+		const documents = await this.knexWrapper.instance(this.table)
 			.delete()
 			.where(query || {})
 			.returning(this.fieldNames(true))
