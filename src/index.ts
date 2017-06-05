@@ -59,7 +59,7 @@ export default {
 		Object.setPrototypeOf(model, this)
 
 		// Verify whether a knex instance is set.
-		if (!model.knex) {
+		if (!model.knexWrapper) {
 			throw new Error('No knex instance was set in the model.')
 		}
 
