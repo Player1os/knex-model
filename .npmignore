@@ -1,8 +1,9 @@
 .awcache/
+.nyc_output/
 .vscode/
 build/
+coverage/
 src/
-task/
 test/
 webpack/
 .babelrc
@@ -10,5 +11,6 @@ webpack/
 .gitattributes
 .gitignore
 .node-version
+README.md
 tsconfig.json
 tslint.json

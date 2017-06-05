@@ -14,3 +14,7 @@ lib/*
 # OS specific files.
 .DS_Store
 Thumbs.db
+
+# Test coverage cache.
+.nyc_output
+coverage

@@ -1,22 +1,29 @@
-// Load npm modules.
-import * as webpack from 'webpack'
-
 // Load node modules.
 import * as fs from 'fs'
 import * as path from 'path'
 
-// Set root path.
-const rootPath = path.resolve(__dirname, '..')
-
 // Load the package file.
-const packageJson = JSON.parse(fs.readFileSync(path.join(rootPath, 'package.json'), 'utf-8'))
+const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf-8'))
 
 // Expose the configuration object.
 export default {
+	entry: [
+		// Include the project starting point into the bundle.
+		path.join(__dirname, 'src', 'index.ts'),
+	],
+	output: {
+		// Make sure that the bundle is built as a library that exports objects.
+		library: 'library',
+		libraryTarget: 'commonjs2',
+		// Define the directory for the compilation output.
+		path: path.join(__dirname, 'build', 'lib'),
+		// Define the name for the compilation output.
+		filename: 'index.js',
+	},
 	// Specify the target to be the node runtime.
 	target: 'node',
 	// Specify that all standard dependencies should be considered exterals to be dynamically included.
-	externals: Object.keys(packageJson.dependencies || {}).concat(Object.keys(packageJson.devDependencies || {}))
+	externals: Object.keys(packageJson.dependencies || {})
 		.reduce((externals, dependencyName) => {
 			externals[dependencyName] = `commonjs ${dependencyName}`
 			return externals
@@ -42,22 +49,10 @@ export default {
 			},
 		],
 	},
-	plugins: [
-		new webpack.BannerPlugin({
-			banner: [
-				"require('source-map-support').install();",
-			].join('\n'),
-			raw: true,
-			entryOnly: false,
-		}),
-		new webpack.ProvidePlugin({
-			Promise: 'bluebird',
-		}),
-	],
 	resolve: {
 		// Specify that the '#' character in imports should be resolved to the project's root path.
 		alias: {
-			'#': rootPath,
+			'#': __dirname,
 		},
 		// Specify that the typescript and javascript extensions can be ommitted from module names.
 		extensions: [
