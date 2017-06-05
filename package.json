@@ -66,5 +66,8 @@
     "tsutils": "1.6.0",
     "typescript": "^2.3.2",
     "webpack": "^2.5.1"
+  },
+  "dependencies": {
+    "@player1os/base-error": "^1.0.3"
   }
 }
