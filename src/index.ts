@@ -11,6 +11,7 @@ import * as lodash from 'lodash'
 // TODO: Make sure the typings are generated correctly.
 // TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
+// TODO: Add typings for the knex wrapper.
 
 // Expose error class.
 export class EntityExistsError extends BaseError {
@@ -64,41 +65,74 @@ export interface IDocument {
 
 // Expose the base model class.
 export abstract class Model {
-	public table: string
-	public fields: {
-		[key: string]: Joi.Schema,
-	}
+	protected createValuesValidationSchema: Joi.Schema
+	protected updateValuesValidationSchema: Joi.Schema
+	protected queryValidationSchema: Joi.Schema
 
 	// A constructor that confirms that the required properties are present.
 	constructor(
 		protected knexWrapper,
-	) {}
+		public table: string,
+		public fields: {
+			[key: string]: Joi.Schema,
+		},
+	) {
+		// Define validator from the schema for the create values.
+		// - all required fields must be present.
+		// - all specified keys must correspond to fields.
+		// - all present fields must conform to the given rules.
+		this.createValuesValidationSchema = Joi.object(lodash.pickBy(this.fields, (_value, key) => {
+			return key !== 'key'
+		}) as Joi.SchemaMap).options({
+			abortEarly: false,
+			convert: false,
+			presence: 'required',
+		})
+
+		// Define validator from the schema for the update values.
+		// - all specified keys must correspond to fields.
+		// - all present fields must conform to the given rules.
+		this.updateValuesValidationSchema = Joi.object(lodash.pickBy(this.fields, (_value, key) => {
+			return key !== 'key'
+		}) as Joi.SchemaMap).options({
+			abortEarly: false,
+			convert: false,
+			presence: 'optional',
+		})
+
+		// Outputs the schema for the query during model extension.
+		// - all specified keys must correspond to (fields + primary key field).
+		// - all present (fields + primary key field) must conform to the given rules.
+		this.queryValidationSchema = Joi.object(this.fields).options({
+			abortEarly: false,
+			convert: false,
+			presence: 'optional',
+		})
+	}
 
 	// All fields present in the underlying data object, a parameter specifies whether this includes the primary key.
 	fieldNames(isKeyIncluded?: boolean) {
 		const baseFieldNames = Object.keys(this.fields)
-		if (isKeyIncluded) {
-			baseFieldNames.push('key')
-		}
-		return baseFieldNames
+		return isKeyIncluded
+			? baseFieldNames
+			: baseFieldNames.filter((baseFieldName) => {
+				return baseFieldName !== 'key'
+			})
 	}
 
 	// Create entities of the model using the provided values.
-	async create(values: IDocument | IDocument[], options: {
+	async create(values: IDocument[], options: {
 		isValidationDisabled?: boolean,
-	} = {}) { // TODO: Replace with knex query builder.
+	} = {}) {
 		try {
 			// Optionally validate the create values.
 			if (!options.isValidationDisabled) {
-				if (lodash.isArray(values)) {
-					// TODO: Add.
-					// values.forEach((valuesEntry) => {
-						// this.createValuesValidator.validate(valuesEntry)
-					// })
-				} else {
-					// TODO: Add.
-					// this.createValuesValidator.validate(values)
-				}
+				values.forEach((valuesEntry) => {
+					const { error } = this.createValuesValidationSchema.validate(valuesEntry)
+					if (error) {
+						throw error
+					}
+				})
 			}
 
 			// Execute the prepared query builder.
@@ -126,7 +160,7 @@ export abstract class Model {
 		isValidationDisabled?: boolean,
 	} = {}) {
 		// Attempt to create the document.
-		const documents = await this.create(values, options)
+		const documents = await this.create([values], options)
 
 		// Return the first created document.
 		return documents[0]
@@ -139,11 +173,13 @@ export abstract class Model {
 			column: string,
 			direction: string,
 		}],
-	} = {}) { // TODO: Replace with knex query builder.
+	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
-			// TODO: Add.
-			// this.queryValidator.validate(query);
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
 		}
 
 		// TODO: Unify the query building method.
@@ -195,8 +231,10 @@ export abstract class Model {
 	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
-			// TODO: Add.
-			// this.queryValidator.validate(query);
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
 		}
 
 		// Select the count from the underlying data object.
@@ -212,17 +250,21 @@ export abstract class Model {
 	async update(query: IDocument, values: IDocument, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
-	} = {}) { // TODO: Replace with knex query builder.
+	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
-			// TODO: Add.
-			// this.queryValidator.validate(query)
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
 		}
 
 		// Optionally validate the update values.
 		if (!options.isValuesValidationDisabled) {
-			// TODO: Add.
-			// this.updateValuesValidator.validate(values)
+			const { error } = this.updateValuesValidationSchema.validate(values)
+			if (error) {
+				throw error
+			}
 		}
 
 		// Return the prepared query builder.
@@ -238,11 +280,13 @@ export abstract class Model {
 	// Destroy all entities of the model matching the query.
 	async destroy(query: IDocument, options: {
 		isValidationDisabled?: boolean,
-	} = {}) { // TODO: Replace with knex query builder.
+	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
-			// TODO: Add.
-			// this.queryValidator.validate(query);
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
 		}
 
 		// Execute the prepared query builder.
