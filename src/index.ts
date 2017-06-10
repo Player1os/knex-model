@@ -10,6 +10,7 @@ import * as lodash from 'lodash'
 // TODO: Split into multiple modules.
 // TODO: Make sure the typings are generated correctly.
 // TODO: Elaborate on the type of the inputs.
+// TODO: Enable the use of a raw where caluse.
 
 // Expose error class.
 export class EntityExistsError extends BaseError {
@@ -83,7 +84,7 @@ export abstract class Model {
 	}
 
 	// Create entities of the model using the provided values.
-	create(values: IDocument | IDocument[], options: {
+	async create(values: IDocument | IDocument[], options: {
 		isValidationDisabled?: boolean,
 	} = {}) { // TODO: Replace with knex query builder.
 		try {
@@ -100,18 +101,22 @@ export abstract class Model {
 				}
 			}
 
-			// Return the prepared query builder.
-			return this.knexWrapper.instance(this.table)
+			// Execute the prepared query builder.
+			const documents = await this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
+
+			// Return the created documents.
+			return documents
 		} catch (err) {
+			// Attempt to better identify the error.
 			switch (err.code) {
-				case '23505': {
+				case '23505':
+					// Encapsulate in an entity exists error and throw it.
 					throw new EntityExistsError(err)
-				}
-				default: {
+				default:
+					// Rethrow the error.
 					throw err
-				}
 			}
 		}
 	}
@@ -128,7 +133,7 @@ export abstract class Model {
 	}
 
 	// Find all entities of the model matching the query.
-	find(query: IDocument, options: {
+	async find(query: IDocument, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -139,36 +144,6 @@ export abstract class Model {
 		if (!options.isValidationDisabled) {
 			// TODO: Add.
 			// this.queryValidator.validate(query);
-		}
-
-		// Select values from the underlying data object.
-		let knexQuery = this.knexWrapper.instance(this.table)
-			.select(this.fieldNames(true))
-			.where(query)
-
-		// Add the optional order by clause.
-		if (options.orderBy) {
-			options.orderBy.forEach((orderByClause) => {
-				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
-			})
-		}
-
-		// Return the prepared query builder.
-		return knexQuery
-	}
-
-	// Find a single entity of the model matching the query.
-	async findOne(query: IDocument, options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-	} = {}) {
-		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
-			// TODO: Add.
-			// this.queryValidator.validate(query)
 		}
 
 		// TODO: Unify the query building method.
@@ -185,8 +160,23 @@ export abstract class Model {
 			})
 		}
 
-		// Execute the built query.
+		// Execute the prepared query builder.
 		const documents = await knexQuery
+
+		// Return the found documents.
+		return documents
+	}
+
+	// Find a single entity of the model matching the query.
+	async findOne(query: IDocument, options: {
+		isValidationDisabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+	} = {}) {
+		// Attempt to find the document.
+		const documents = await this.find(query, options)
 
 		// Check if at least one document was found.
 		if (documents.length === 0) {
@@ -219,7 +209,7 @@ export abstract class Model {
 	}
 
 	// Update all entities of the model matching the query with the supplied values.
-	update(query: IDocument, values: IDocument, options: {
+	async update(query: IDocument, values: IDocument, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 	} = {}) { // TODO: Replace with knex query builder.
@@ -236,13 +226,16 @@ export abstract class Model {
 		}
 
 		// Return the prepared query builder.
-		return this.knexWrapper.instance(this.table)
+		const documents = await this.knexWrapper.instance(this.table)
 			.update(values)
 			.where(query)
 			.returning(this.fieldNames(true))
+
+		// Return the updated documents.
+		return documents
 	}
 
-	// Delete all entities of the model matching the query.
+	// Destroy all entities of the model matching the query.
 	async destroy(query: IDocument, options: {
 		isValidationDisabled?: boolean,
 	} = {}) { // TODO: Replace with knex query builder.
@@ -252,11 +245,14 @@ export abstract class Model {
 			// this.queryValidator.validate(query);
 		}
 
-		// Return the prepared query builder.
-		return this.knexWrapper.instance(this.table)
+		// Execute the prepared query builder.
+		const documents = await this.knexWrapper.instance(this.table)
 			.delete()
 			.where(query || {})
 			.returning(this.fieldNames(true))
+
+		// Return the destroyed documents.
+		return documents
 	}
 
 	async save(document: {
