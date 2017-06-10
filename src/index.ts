@@ -95,7 +95,7 @@ export abstract class Model {
 	// Create entities of the model using the provided values.
 	create(values: IDocument | IDocument[], options: {
 		isValidationDisabled?: boolean,
-	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
+	} = {}) { // TODO: Replace with knex query builder.
 		try {
 			// Optionally validate the create values.
 			if (!options.isValidationDisabled) {
@@ -129,7 +129,7 @@ export abstract class Model {
 	// Create a single entity of the model.
 	async createOne(values: IDocument, options: {
 		isValidationDisabled?: boolean,
-	} = {}): Promise<IDocument> {
+	} = {}) {
 		// Attempt to create the document.
 		const documents = await this.create(values, options)
 
@@ -144,7 +144,7 @@ export abstract class Model {
 			column: string,
 			direction: string,
 		}],
-	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
+	} = {}) { // TODO: Replace with knex query builder.
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			// TODO: Add.
@@ -174,7 +174,7 @@ export abstract class Model {
 			column: string,
 			direction: string,
 		}],
-	} = {}): Promise<IDocument> {
+	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			// TODO: Add.
@@ -232,7 +232,7 @@ export abstract class Model {
 	update(query: IDocument, values: IDocument, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
-	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
+	} = {}) { // TODO: Replace with knex query builder.
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			// TODO: Add.
@@ -255,7 +255,7 @@ export abstract class Model {
 	// Delete all entities of the model matching the query.
 	async destroy(query: IDocument, options: {
 		isValidationDisabled?: boolean,
-	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
+	} = {}) { // TODO: Replace with knex query builder.
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			// TODO: Add.
