@@ -3,6 +3,14 @@
 // Load scoped modules.
 import BaseError from '@player1os/base-error'
 
+// Load npm modules.
+import * as Joi from 'joi'
+import * as lodash from 'lodash'
+
+// TODO: Split into multiple modules.
+// TODO: Make sure the typings are generated correctly.
+// TODO: Elaborate on the type of the inputs.
+
 // Expose error class.
 export class EntityExistsError extends BaseError {
 	fieldName
@@ -48,59 +56,62 @@ export class EntityNotFoundError extends BaseError {
 	}
 }
 
-// Load npm modules.
-import * as lodash from 'lodash'
+// Expose the base model class.
+export abstract class Model {
+	public table: string
+	public fields: {
+		[key: string]: Joi.Schema,
+	}
 
-// Expose the base model object.
-export default {
-	// Create new models by extending the current one.
-	extend(model) {
-		// Setup the prototype chain.
-		Object.setPrototypeOf(model, this)
-
-		// Verify whether a knex instance is set.
-		if (!model.knexWrapper) {
-			throw new Error('No knex instance was set in the model.')
-		}
-
+	// A constructor that confirms that the required properties are present.
+	constructor(
+		protected knexWrapper,
+	) {
 		// Verify whether a table name is set.
-		if (!model.table) {
+		if (!this.table) {
 			throw new Error('No table name was set in the model.')
 		}
 
 		// Verify whether a fields object is set.
-		if (!model.fields) {
+		if (!this.fields) {
 			throw new Error('No fields object was set in the model.')
 		}
+	}
 
-		// Pass the extended model to the caller.
-		return model
-	},
-	// All fields present in the underlying data object,
-	// a parameter specifies whether this includes the primary key.
-	fieldNames(isKeyIncluded) {
+	// All fields present in the underlying data object, a parameter specifies whether this includes the primary key.
+	fieldNames(isKeyIncluded?: boolean) {
 		const baseFieldNames = Object.keys(this.fields)
 		if (isKeyIncluded) {
 			baseFieldNames.push('key')
 		}
 		return baseFieldNames
-	},
+	}
+
 	// Create a single entity of the model.
-	async create(values) {
+	async create(values: object | object[], options: {
+		isValidationEnabled?: boolean,
+	} = {}): Promise<object[]> {
 		try {
-			// TODO: Add.
-			/*
 			// Validate create values.
-			this.createValuesValidator.validate(values);
-			*/
+			if (options.isValidationEnabled) {
+				if (lodash.isArray(values)) {
+					// TODO: Add.
+					// values.forEach((valuesEntry) => {
+						// this.createValuesValidator.validate(valuesEntry)
+					// })
+				} else {
+					// TODO: Add.
+					// this.createValuesValidator.validate(values)
+				}
+			}
 
 			// Insert values into the underlying data object.
 			const documents = await this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
 
-			// Return the first created document.
-			return documents[0]
+			// Return all created documents.
+			return documents
 		} catch (err) {
 			switch (err.code) {
 				case '23505': {
@@ -111,23 +122,58 @@ export default {
 				}
 			}
 		}
-	},
+	}
+
 	// Find all entities of the model matching the query.
-	async find(query, options = {
-		orderBy: null,
-	}) {
-		// TODO: Add.
-		/*
-		// Validate query.
-		this.queryValidator.validate(query);
-		*/
+	find(query: object, options: {
+		isValidationEnabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+	} = {}): Promise<object[]> {
+		// Optionally validate the query values.
+		if (options.isValidationEnabled) {
+			// TODO: Add.
+			// this.queryValidator.validate(query);
+		}
 
 		// Select values from the underlying data object.
 		let knexQuery = this.knexWrapper.instance(this.table)
 			.select(this.fieldNames(true))
 			.where(query || {})
 
-		// Add an order by clause if needed.
+		// Add the optional order by clause.
+		if (options.orderBy) {
+			options.orderBy.forEach((orderByClause) => {
+				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
+			})
+		}
+
+		// Return the prepared query builder.
+		return knexQuery
+	}
+
+	// Find a single entity of the model matching the query.
+	async findOne(query: object, options: {
+		isValidationEnabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+	} = {}) {
+		// Optionally validate the query values.
+		if (options.isValidationEnabled) {
+			// TODO: Add.
+			// this.queryValidator.validate(query)
+		}
+
+		// Select values from the underlying data object.
+		let knexQuery = this.knexWrapper.instance(this.table)
+			.select(this.fieldNames(true))
+			.where(query || {})
+
+		// Add the optional order by clause.
 		if (options.orderBy) {
 			options.orderBy.forEach((orderByClause) => {
 				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
@@ -137,39 +183,26 @@ export default {
 		// Execute the built query.
 		const documents = await knexQuery
 
-		// Return the result.
-		return documents
-	},
-	// Find all entities of the model matching the query.
-	async findOne(query) {
-		// TODO: Add.
-		/*
-		// Validate query.
-		this.queryValidator.validate(query);
-		*/
-
-		// Select values from the underlying data object.
-		const documents = await this.knexWrapper.instance(this.table)
-			.select(this.fieldNames(true))
-			.where(query || {})
-			// Limit to a single row.
-			.limit(1)
-
 		// Check if at least one document was found.
 		if (documents.length === 0) {
 			throw new EntityNotFoundError()
 		}
 
+		// TODO: Add a validation option to check if the returned value is unique.
+
 		// Return the first retrieved document.
 		return documents[0]
-	},
+	}
+
 	// Find the count of all entities of the model matching the query.
-	async count(query) {
-		// TODO: Add.
-		/*
-		// Validate query.
-		this.queryValidator.validate(query);
-		*/
+	async count(query: object, options: {
+		isValidationEnabled?: boolean,
+	} = {}) {
+		// Optionally validate the query values.
+		if (options.isValidationEnabled) {
+			// TODO: Add.
+			// this.queryValidator.validate(query);
+		}
 
 		// Select the count from the underlying data object.
 		const result = await this.knexWrapper.instance(this.table)
@@ -178,9 +211,10 @@ export default {
 
 		// Parse the result of the count query.
 		return parseInt(result[0].count, 10)
-	},
+	}
+
 	// Update all entities of the model matching the query with the supplied values.
-	async update(query, values) {
+	async update(query: object, values: object) {
 		// TODO: Add.
 		/*
 		// Validate update values.
@@ -198,14 +232,17 @@ export default {
 
 		// Return the retrieved documents.
 		return documents
-	},
+	}
+
 	// Delete all entities of the model matching the query.
-	async destroy(query) {
-		// TODO: Add.
-		/*
-		// Validate query.
-		this.queryValidator.validate(query);
-		*/
+	async destroy(query: object, options: {
+		isValidationEnabled?: boolean,
+	} = {}) {
+		// Optionally validate the query values.
+		if (options.isValidationEnabled) {
+			// TODO: Add.
+			// this.queryValidator.validate(query);
+		}
 
 		// Delete rows from the underlying data object.
 		const documents = await this.knexWrapper.instance(this.table)
@@ -215,23 +252,31 @@ export default {
 
 		// Return the retrieved documents.
 		return documents
-	},
-	async save(document) {
+	}
+
+	async save(document: {
+		key: number | string,
+	}) {
 		// Update the entity with the given document key using the given document values.
+		// TODO: Replace with update by key.
 		const documents = await this.update({
 			key: document.key,
 		}, lodash.pick(document, this.fieldNames()))
 
 		// Return the first retrieved document.
 		return documents[0]
-	},
-	async delete(document) {
+	}
+
+	async delete(document: {
+		key: number | string,
+	}) {
 		// Destroy the row with the given document key.
+		// TODO: Replace with destroy by key.
 		const documents = await this.destroy({
 			key: document.key,
 		})
 
 		// Return the first retrieved document.
 		return documents[0]
-	},
+	}
 }

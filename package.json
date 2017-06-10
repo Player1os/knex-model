@@ -43,6 +43,7 @@
     "@player1os/tslint-config": "^1.1.1",
     "@types/bluebird-global": "^3.5.2",
     "@types/chai": "^4.0.0",
+    "@types/joi": "^10.4.0",
     "@types/knex": "0.0.53",
     "@types/lodash": "^4.14.65",
     "@types/mocha": "^2.2.41",
@@ -69,6 +70,7 @@
     "webpack": "^2.5.1"
   },
   "dependencies": {
-    "@player1os/base-error": "^1.0.3"
+    "@player1os/base-error": "^1.0.3",
+    "joi": "^10.5.2"
   }
 }
