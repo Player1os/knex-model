@@ -56,6 +56,11 @@ export class EntityNotFoundError extends BaseError {
 	}
 }
 
+// Expose the interface that defines input values.
+export interface IDocument {
+	[key: string]: boolean | number | string | null,
+}
+
 // Expose the base model class.
 export abstract class Model {
 	public table: string
@@ -87,13 +92,13 @@ export abstract class Model {
 		return baseFieldNames
 	}
 
-	// Create a single entity of the model.
-	async create(values: object | object[], options: {
-		isValidationEnabled?: boolean,
-	} = {}): Promise<object[]> {
+	// Create entities of the model using the provided values.
+	create(values: IDocument | IDocument[], options: {
+		isValidationDisabled?: boolean,
+	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
 		try {
-			// Validate create values.
-			if (options.isValidationEnabled) {
+			// Optionally validate the create values.
+			if (!options.isValidationDisabled) {
 				if (lodash.isArray(values)) {
 					// TODO: Add.
 					// values.forEach((valuesEntry) => {
@@ -105,13 +110,10 @@ export abstract class Model {
 				}
 			}
 
-			// Insert values into the underlying data object.
-			const documents = await this.knexWrapper.instance(this.table)
+			// Return the prepared query builder.
+			return this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
-
-			// Return all created documents.
-			return documents
 		} catch (err) {
 			switch (err.code) {
 				case '23505': {
@@ -124,16 +126,27 @@ export abstract class Model {
 		}
 	}
 
+	// Create a single entity of the model.
+	async createOne(values: IDocument, options: {
+		isValidationDisabled?: boolean,
+	} = {}): Promise<IDocument> {
+		// Attempt to create the document.
+		const documents = await this.create(values, options)
+
+		// Return the first created document.
+		return documents[0]
+	}
+
 	// Find all entities of the model matching the query.
-	find(query: object, options: {
-		isValidationEnabled?: boolean,
+	find(query: IDocument, options: {
+		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
 			direction: string,
 		}],
-	} = {}): Promise<object[]> {
+	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
 		// Optionally validate the query values.
-		if (options.isValidationEnabled) {
+		if (!options.isValidationDisabled) {
 			// TODO: Add.
 			// this.queryValidator.validate(query);
 		}
@@ -141,7 +154,7 @@ export abstract class Model {
 		// Select values from the underlying data object.
 		let knexQuery = this.knexWrapper.instance(this.table)
 			.select(this.fieldNames(true))
-			.where(query || {})
+			.where(query)
 
 		// Add the optional order by clause.
 		if (options.orderBy) {
@@ -155,23 +168,25 @@ export abstract class Model {
 	}
 
 	// Find a single entity of the model matching the query.
-	async findOne(query: object, options: {
-		isValidationEnabled?: boolean,
+	async findOne(query: IDocument, options: {
+		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
 			direction: string,
 		}],
-	} = {}) {
+	} = {}): Promise<IDocument> {
 		// Optionally validate the query values.
-		if (options.isValidationEnabled) {
+		if (!options.isValidationDisabled) {
 			// TODO: Add.
 			// this.queryValidator.validate(query)
 		}
 
+		// TODO: Unify the query building method.
+
 		// Select values from the underlying data object.
 		let knexQuery = this.knexWrapper.instance(this.table)
 			.select(this.fieldNames(true))
-			.where(query || {})
+			.where(query)
 
 		// Add the optional order by clause.
 		if (options.orderBy) {
@@ -195,11 +210,11 @@ export abstract class Model {
 	}
 
 	// Find the count of all entities of the model matching the query.
-	async count(query: object, options: {
-		isValidationEnabled?: boolean,
+	async count(query: IDocument, options: {
+		isValidationDisabled?: boolean,
 	} = {}) {
 		// Optionally validate the query values.
-		if (options.isValidationEnabled) {
+		if (!options.isValidationDisabled) {
 			// TODO: Add.
 			// this.queryValidator.validate(query);
 		}
@@ -207,51 +222,51 @@ export abstract class Model {
 		// Select the count from the underlying data object.
 		const result = await this.knexWrapper.instance(this.table)
 			.count()
-			.where(query || {})
+			.where(query)
 
 		// Parse the result of the count query.
 		return parseInt(result[0].count, 10)
 	}
 
 	// Update all entities of the model matching the query with the supplied values.
-	async update(query: object, values: object) {
-		// TODO: Add.
-		/*
-		// Validate update values.
-		this.updateValuesValidator.validate(values);
+	update(query: IDocument, values: IDocument, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
+		// Optionally validate the query values.
+		if (!options.isQueryValidationDisabled) {
+			// TODO: Add.
+			// this.queryValidator.validate(query)
+		}
 
-		// Validate query.
-		this.queryValidator.validate(query);
-		*/
+		// Optionally validate the update values.
+		if (!options.isValuesValidationDisabled) {
+			// TODO: Add.
+			// this.updateValuesValidator.validate(values)
+		}
 
-		// Update values in the underlying data object.
-		const documents = await this.knexWrapper.instance(this.table)
+		// Return the prepared query builder.
+		return this.knexWrapper.instance(this.table)
 			.update(values)
-			.where(query || {})
+			.where(query)
 			.returning(this.fieldNames(true))
-
-		// Return the retrieved documents.
-		return documents
 	}
 
 	// Delete all entities of the model matching the query.
-	async destroy(query: object, options: {
-		isValidationEnabled?: boolean,
-	} = {}) {
+	async destroy(query: IDocument, options: {
+		isValidationDisabled?: boolean,
+	} = {}): Promise<IDocument[]> { // TODO: Replace with knex query builder.
 		// Optionally validate the query values.
-		if (options.isValidationEnabled) {
+		if (!options.isValidationDisabled) {
 			// TODO: Add.
 			// this.queryValidator.validate(query);
 		}
 
-		// Delete rows from the underlying data object.
-		const documents = await this.knexWrapper.instance(this.table)
+		// Return the prepared query builder.
+		return this.knexWrapper.instance(this.table)
 			.delete()
 			.where(query || {})
 			.returning(this.fieldNames(true))
-
-		// Return the retrieved documents.
-		return documents
 	}
 
 	async save(document: {
@@ -261,7 +276,7 @@ export abstract class Model {
 		// TODO: Replace with update by key.
 		const documents = await this.update({
 			key: document.key,
-		}, lodash.pick(document, this.fieldNames()))
+		}, lodash.pick(document, this.fieldNames()) as {})
 
 		// Return the first retrieved document.
 		return documents[0]
