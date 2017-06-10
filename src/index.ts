@@ -71,17 +71,7 @@ export abstract class Model {
 	// A constructor that confirms that the required properties are present.
 	constructor(
 		protected knexWrapper,
-	) {
-		// Verify whether a table name is set.
-		if (!this.table) {
-			throw new Error('No table name was set in the model.')
-		}
-
-		// Verify whether a fields object is set.
-		if (!this.fields) {
-			throw new Error('No fields object was set in the model.')
-		}
-	}
+	) {}
 
 	// All fields present in the underlying data object, a parameter specifies whether this includes the primary key.
 	fieldNames(isKeyIncluded?: boolean) {
