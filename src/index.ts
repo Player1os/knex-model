@@ -15,7 +15,6 @@ import * as lodash from 'lodash'
 // TODO: Add pagination.
 // TODO: Add relations.
 // TODO: Add column aliasing.
-// TODO: Add CNF or DNF queries.
 // TODO: Add projection to find methods.
 
 // Expose the error class.
@@ -71,16 +70,22 @@ export class MultipleEntitiesFoundError extends BaseError {
 	}
 }
 
-// Expose the interface that defines input values.
-export interface IDocument {
-	[key: string]: boolean | number | string | null,
+// Expose the interface that defines the input values.
+export interface IValues {
+	[key: string]: boolean | number | string,
 }
+
+// Expose the interface that defines the input query.
+export interface IQueryItem {
+	[key: string]: boolean | number | string | number[] | string[],
+}
+export type IQuery = IQueryItem | IQueryItem[]
 
 // Expose the base model class.
 export abstract class Model {
 	protected createValuesValidationSchema: Joi.ObjectSchema
 	protected updateValuesValidationSchema: Joi.ObjectSchema
-	protected queryValidationSchema: Joi.ObjectSchema
+	protected queryValidationSchema: Joi.Schema
 
 	// A constructor that confirms that the required properties are present.
 	constructor(
@@ -126,18 +131,45 @@ export abstract class Model {
 			presence: 'optional',
 		})
 
+		// Define the validation schema for a single query item.
+		let queryItemValidationSchema = Joi.object(Object.keys(this.fields).reduce((map, fieldName) => {
+			// Store the field validation schema.
+			const fieldValidationSchema = this.fields[fieldName]
+
+			// Allow value or array of values in a positive and negated version of the field.
+			map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
+				fieldValidationSchema,
+				Joi.array().items(fieldValidationSchema),
+			])
+
+			// Return the augumented map.
+			return map
+		}, {}))
+
+		// Define an exclusive relationships between each field key and its negation.
+		Object.keys(this.fields).forEach((fieldName) => {
+			queryItemValidationSchema.xor(fieldName, `!${fieldName}`)
+		})
+
+		// Setup the keys to be optional.
+		queryItemValidationSchema = queryItemValidationSchema.options({
+			presence: 'optional',
+		})
+
 		// Outputs the schema for the query during model extension.
 		// - all specified keys must correspond to (fields + primary key field).
 		// - all present (fields + primary key field) must conform to the given rules.
-		this.queryValidationSchema = Joi.object(this.fields).options({
+		this.queryValidationSchema = Joi.alternatives([
+			queryItemValidationSchema,
+			Joi.array().items(queryItemValidationSchema),
+		]).required().options({
 			abortEarly: false,
 			convert: false,
-			presence: 'optional',
 		})
 	}
 
 	// All fields present in the underlying data object, a parameter specifies whether this includes the primary key.
-	fieldNames(isKeyIncluded?: boolean) {
+	protected fieldNames(isKeyIncluded?: boolean) {
 		const baseFieldNames = Object.keys(this.fields)
 		return isKeyIncluded
 			? baseFieldNames
@@ -147,7 +179,7 @@ export abstract class Model {
 	}
 
 	// Create entities of the model using the provided values.
-	async create(values: IDocument[], options: {
+	async create(values: IValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -191,7 +223,7 @@ export abstract class Model {
 	}
 
 	// Create a single entity of the model.
-	async createOne(values: IDocument, options: {
+	async createOne(values: IValues, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -204,14 +236,64 @@ export abstract class Model {
 		return documents[0]
 	}
 
+	// Prepare a manipulator for a single knex query item.
+	protected prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: IQueryItem) {
+		let newKnexQuery = knexQuery
+
+		lodash.forEach(queryItem, (value, key) => {
+			// Determine whether multiple values are to be checked.
+			if (lodash.isArray(value)) {
+				// Check if the passed array is empty.
+				if (value.length === 0) {
+					throw new Error('An empty array has been passed.')
+				}
+
+				// Determine whether the query requires a negation.
+				if (key.charAt(0) === '!') {
+					newKnexQuery = newKnexQuery.whereNotIn(key.substr(1), value)
+				} else {
+					newKnexQuery = newKnexQuery.whereIn(key, value)
+				}
+			} else {
+				// Check if the passed value is undefined.
+				if (value === undefined) {
+					throw new Error('An undefined value has been passed.')
+				}
+
+				// Determine whether the query requires a negation.
+				if (key.charAt(0) === '!') {
+					newKnexQuery = newKnexQuery.whereNot(key.substr(1), value)
+				} else {
+					newKnexQuery = newKnexQuery.where(key, value)
+				}
+			}
+		})
+
+		return newKnexQuery
+	}
+
 	// Prepare a pluggable knex query based on the query parameters.
-	protected prepareQueryParameters(query: IDocument) {
-		return this.knexWrapper.instance(this.table)
-			.where(query)
+	protected prepareQueryParameters(query: IQuery) {
+		// Define the initial query builder upon the model's table.
+		let knexQuery = this.knexWrapper.instance(this.table)
+
+		// Add filters using the submitted query.
+		if (lodash.isArray(query)) {
+			query.forEach((queryItem) => {
+				knexQuery = knexQuery.orWhere((whereQuery) => {
+					this.prepareQueryItemParamters(whereQuery, queryItem)
+				})
+			})
+		} else {
+			knexQuery = this.prepareQueryItemParamters(knexQuery, query)
+		}
+
+		// Return the prepared query builder.
+		return knexQuery
 	}
 
 	// Find all entities of the model matching the query.
-	async find(query: IDocument, options: {
+	async find(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -263,7 +345,7 @@ export abstract class Model {
 	}
 
 	// Find a single entity of the model matching the query.
-	async findOne(query: IDocument, options: {
+	async findOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -308,7 +390,7 @@ export abstract class Model {
 	}
 
 	// Find the count of all entities of the model matching the query.
-	async count(query: IDocument, options: {
+	async count(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -337,7 +419,7 @@ export abstract class Model {
 	}
 
 	// Update all entities of the model matching the query with the supplied values.
-	async update(query: IDocument, values: IDocument, options: {
+	async update(query: IQuery, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -376,7 +458,7 @@ export abstract class Model {
 	}
 
 	// Update a single entity of the model matching the query with the supplied values.
-	async updateOne(query: IDocument, values: IDocument, options: {
+	async updateOne(query: IQuery, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -399,7 +481,7 @@ export abstract class Model {
 	}
 
 	// Update a single entity of the model matching the key with the supplied values.
-	updateByKey(key: number | string, values: IDocument, options: {
+	updateByKey(key: number | string, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -409,7 +491,7 @@ export abstract class Model {
 	}
 
 	// Destroy all entities of the model matching the query.
-	async destroy(query: IDocument, options: {
+	async destroy(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -439,7 +521,7 @@ export abstract class Model {
 	}
 
 	// Destroy a single entity of the model matching the query.
-	async destroyOne(query: IDocument, options: {
+	async destroyOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
