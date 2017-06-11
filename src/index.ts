@@ -353,9 +353,7 @@ export abstract class Model {
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Attempt to find the document.
-		const documents = await this.find(query, Object.assign({
-			limit: 1,
-		}, options))
+		const documents = await this.find(query, options))
 
 		// Check if at least one document was found.
 		if (documents.length === 0) {
