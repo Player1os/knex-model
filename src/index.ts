@@ -5,6 +5,7 @@ import BaseError from '@player1os/base-error'
 
 // Load npm modules.
 import * as Joi from 'joi'
+import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
 // TODO: Split into multiple modules.
@@ -71,7 +72,9 @@ export abstract class Model {
 
 	// A constructor that confirms that the required properties are present.
 	constructor(
-		protected knexWrapper,
+		protected knexWrapper: {
+			instance: Knex,
+		},
 		public table: string,
 		public fields: {
 			key: Joi.NumberSchema | Joi.StringSchema,
@@ -134,6 +137,7 @@ export abstract class Model {
 	// Create entities of the model using the provided values.
 	async create(values: IDocument[], options: {
 		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		try {
 			// Optionally validate the create values.
@@ -146,10 +150,18 @@ export abstract class Model {
 				})
 			}
 
-			// Execute the prepared query builder.
-			const documents = await this.knexWrapper.instance(this.table)
+			// Define an insertion query builder.
+			let knexQuery = this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
+
+			// Optionally use the supplied transaction.
+			if (options.transaction) {
+				knexQuery = knexQuery.transacting(options.transaction)
+			}
+
+			// Execute the prepared query builder.
+			const documents = await knexQuery
 
 			// Return the created documents.
 			return documents
@@ -179,6 +191,12 @@ export abstract class Model {
 		return documents[0]
 	}
 
+	// Prepare a pluggable knex query based on the query parameters.
+	protected prepareQueryParameters(query: IDocument) {
+		return this.knexWrapper.instance(this.table)
+			.where(query)
+	}
+
 	// Find all entities of the model matching the query.
 	async find(query: IDocument, options: {
 		isValidationDisabled?: boolean,
@@ -195,12 +213,9 @@ export abstract class Model {
 			}
 		}
 
-		// TODO: Unify the query building method.
-
 		// Select values from the underlying data object.
-		let knexQuery = this.knexWrapper.instance(this.table)
+		let knexQuery = this.prepareQueryParameters(query)
 			.select(this.fieldNames(true))
-			.where(query)
 
 		// Add the optional order by clause.
 		if (options.orderBy) {
@@ -251,9 +266,8 @@ export abstract class Model {
 		}
 
 		// Select the count from the underlying data object.
-		const result = await this.knexWrapper.instance(this.table)
+		const result = await this.prepareQueryParameters(query)
 			.count()
-			.where(query)
 
 		// Parse the result of the count query.
 		return parseInt(result[0].count, 10)
@@ -281,9 +295,8 @@ export abstract class Model {
 		}
 
 		// Return the prepared query builder.
-		const documents = await this.knexWrapper.instance(this.table)
+		const documents = await this.prepareQueryParameters(query)
 			.update(values)
-			.where(query)
 			.returning(this.fieldNames(true))
 
 		// Return the updated documents.
@@ -303,9 +316,8 @@ export abstract class Model {
 		}
 
 		// Execute the prepared query builder.
-		const documents = await this.knexWrapper.instance(this.table)
+		const documents = this.prepareQueryParameters(query)
 			.delete()
-			.where(query || {})
 			.returning(this.fieldNames(true))
 
 		// Return the destroyed documents.
