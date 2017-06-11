@@ -150,7 +150,7 @@ export abstract class Model {
 				})
 			}
 
-			// Define an insertion query builder.
+			// Prepare an insertion query builder.
 			let knexQuery = this.knexWrapper.instance(this.table)
 				.insert(values)
 				.returning(this.fieldNames(true))
@@ -181,6 +181,7 @@ export abstract class Model {
 	// Create a single entity of the model.
 	async createOne(values: IDocument, options: {
 		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Attempt to create the document.
 		const documents = await this.create([values], options)
@@ -204,6 +205,9 @@ export abstract class Model {
 			column: string,
 			direction: string,
 		}],
+		limit?: number,
+		offset?: number,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
@@ -213,7 +217,7 @@ export abstract class Model {
 			}
 		}
 
-		// Select values from the underlying data object.
+		// Prepare a selection query builder.
 		let knexQuery = this.prepareQueryParameters(query)
 			.select(this.fieldNames(true))
 
@@ -222,6 +226,21 @@ export abstract class Model {
 			options.orderBy.forEach((orderByClause) => {
 				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
 			})
+		}
+
+		// Add the optional limit clause.
+		if (options.limit) {
+			knexQuery = knexQuery.limit(options.limit)
+		}
+
+		// Add the optional offset clause.
+		if (options.offset) {
+			knexQuery = knexQuery.offset(options.offset)
+		}
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
 		}
 
 		// Execute the prepared query builder.
@@ -238,9 +257,14 @@ export abstract class Model {
 			column: string,
 			direction: string,
 		}],
+		limit?: number,
+		offset?: number,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Attempt to find the document.
-		const documents = await this.find(query, options)
+		const documents = await this.find(query, Object.assign({
+			limit: 1,
+		}, options))
 
 		// Check if at least one document was found.
 		if (documents.length === 0) {
@@ -256,6 +280,7 @@ export abstract class Model {
 	// Find the count of all entities of the model matching the query.
 	async count(query: IDocument, options: {
 		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
@@ -265,9 +290,17 @@ export abstract class Model {
 			}
 		}
 
-		// Select the count from the underlying data object.
-		const result = await this.prepareQueryParameters(query)
+		// Prepare a selection query builder.
+		let knexQuery = this.prepareQueryParameters(query)
 			.count()
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Execute the prepared query builder.
+		const result = await knexQuery
 
 		// Parse the result of the count query.
 		return parseInt(result[0].count, 10)
@@ -277,6 +310,7 @@ export abstract class Model {
 	async update(query: IDocument, values: IDocument, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
@@ -294,10 +328,18 @@ export abstract class Model {
 			}
 		}
 
-		// Return the prepared query builder.
-		const documents = await this.prepareQueryParameters(query)
+		// Prepare an update query builder.
+		let knexQuery = this.prepareQueryParameters(query)
 			.update(values)
 			.returning(this.fieldNames(true))
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Return the prepared query builder.
+		const documents = await knexQuery
 
 		// Return the updated documents.
 		return documents
@@ -306,6 +348,7 @@ export abstract class Model {
 	// Destroy all entities of the model matching the query.
 	async destroy(query: IDocument, options: {
 		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
 	} = {}) {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
@@ -315,15 +358,24 @@ export abstract class Model {
 			}
 		}
 
-		// Execute the prepared query builder.
-		const documents = this.prepareQueryParameters(query)
+		// Prepare a deletion query builder.
+		let knexQuery = this.prepareQueryParameters(query)
 			.delete()
 			.returning(this.fieldNames(true))
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Return the prepared query builder.
+		const documents = await knexQuery
 
 		// Return the destroyed documents.
 		return documents
 	}
 
+	// Update the entity indicated by the primary key that's part of the given document.
 	async save(document: {
 		key: number | string,
 	}) {
@@ -337,6 +389,7 @@ export abstract class Model {
 		return documents[0]
 	}
 
+	// Destroy the entity indicated by the primary key that's part of the given document.
 	async delete(document: {
 		key: number | string,
 	}) {
