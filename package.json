@@ -1,6 +1,6 @@
 {
   "name": "@player1os/knex-model",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A a base class for models built on top of the knex query builder",
   "private": false,
   "main": "lib/index.js",
