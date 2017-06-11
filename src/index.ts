@@ -65,18 +65,29 @@ export interface IDocument {
 
 // Expose the base model class.
 export abstract class Model {
-	protected createValuesValidationSchema: Joi.Schema
-	protected updateValuesValidationSchema: Joi.Schema
-	protected queryValidationSchema: Joi.Schema
+	protected createValuesValidationSchema: Joi.ObjectSchema
+	protected updateValuesValidationSchema: Joi.ObjectSchema
+	protected queryValidationSchema: Joi.ObjectSchema
 
 	// A constructor that confirms that the required properties are present.
 	constructor(
 		protected knexWrapper,
 		public table: string,
 		public fields: {
-			[key: string]: Joi.Schema,
+			key: Joi.NumberSchema | Joi.StringSchema,
+			[key: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema,
 		},
 	) {
+		// Verify whether a table name is set.
+		if (!this.table) {
+			throw new Error('No table name was set in the model.')
+		}
+
+		// Verify whether a fields object is set and contains the key field.
+		if (!this.fields || !this.fields.key) {
+			throw new Error('No fields object containing a key field was set in the model.')
+		}
+
 		// Define validator from the schema for the create values.
 		// - all required fields must be present.
 		// - all specified keys must correspond to fields.
@@ -161,6 +172,8 @@ export abstract class Model {
 	} = {}) {
 		// Attempt to create the document.
 		const documents = await this.create([values], options)
+
+		// TODO: Add a length check for the array.
 
 		// Return the first created document.
 		return documents[0]
