@@ -132,10 +132,7 @@ export abstract class Model {
 		})
 
 		// Define the validation schema for a single query item.
-		let queryItemValidationSchema = Joi.object(Object.keys(this.fields).reduce((map, fieldName) => {
-			// Store the field validation schema.
-			const fieldValidationSchema = this.fields[fieldName]
-
+		let queryItemValidationSchema = Joi.object(lodash.reduce(this.fields, (map, fieldValidationSchema, fieldName) => {
 			// Allow value or array of values in a positive and negated version of the field.
 			map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
 				fieldValidationSchema,
