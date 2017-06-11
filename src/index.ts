@@ -12,9 +12,13 @@ import * as lodash from 'lodash'
 // TODO: Make sure the typings are generated correctly.
 // TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
-// TODO: Add typings for the knex wrapper.
+// TODO: Add pagination.
+// TODO: Add relations.
+// TODO: Add column aliasing.
+// TODO: Add CNF or DNF queries.
+// TODO: Add projection to find methods.
 
-// Expose error class.
+// Expose the error class.
 export class EntityExistsError extends BaseError {
 	fieldName
 	constraint
@@ -51,11 +55,19 @@ export class EntityExistsError extends BaseError {
 	}
 }
 
-// Expose error class.
+// Expose the error class.
 export class EntityNotFoundError extends BaseError {
 	constructor() {
 		// Call parent constructor.
 		super('No entity exists that matches the submitted query')
+	}
+}
+
+// Expose the error class.
+export class MultipleEntitiesFoundError extends BaseError {
+	constructor() {
+		// Call parent constructor.
+		super('More than a single entity exists that matches the submitted query')
 	}
 }
 
@@ -271,10 +283,28 @@ export abstract class Model {
 			throw new EntityNotFoundError()
 		}
 
-		// TODO: Add a validation option to check if the returned value is unique.
+		// Check if more than one value was altered.
+		if (documents.length > 1) {
+			throw new MultipleEntitiesFoundError()
+		}
 
 		// Return the first retrieved document.
 		return documents[0]
+	}
+
+	// Find a single entity of the model matching the key.
+	findByKey(key: number | string, options: {
+		isValidationDisabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+		limit?: number,
+		offset?: number,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Call the find one method with only the key in the query.
+		return this.findOne({ key }, options)
 	}
 
 	// Find the count of all entities of the model matching the query.
@@ -345,6 +375,39 @@ export abstract class Model {
 		return documents
 	}
 
+	// Update a single entity of the model matching the query with the supplied values.
+	async updateOne(query: IDocument, values: IDocument, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Exectute the update method with the submitted arguments.
+		const documents = await this.update(query, values, options)
+
+		// Check if at least one value was altered.
+		if (documents.length === 0) {
+			throw new EntityNotFoundError()
+		}
+
+		// Check if more than one value was altered.
+		if (documents.length > 1) {
+			throw new MultipleEntitiesFoundError()
+		}
+
+		// Return the altered document.
+		return documents[0]
+	}
+
+	// Update a single entity of the model matching the key with the supplied values.
+	updateByKey(key: number | string, values: IDocument, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Call the update one method with only the key in the query.
+		return this.updateOne({ key }, values, options)
+	}
+
 	// Destroy all entities of the model matching the query.
 	async destroy(query: IDocument, options: {
 		isValidationDisabled?: boolean,
@@ -375,15 +438,47 @@ export abstract class Model {
 		return documents
 	}
 
+	// Destroy a single entity of the model matching the query.
+	async destroyOne(query: IDocument, options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Exectute the update method with the submitted arguments.
+		const documents = await this.destroy(query, options)
+
+		// Check if at least one value was deleted.
+		if (documents.length === 0) {
+			throw new EntityNotFoundError()
+		}
+
+		// Check if more than one value was deleted.
+		if (documents.length > 1) {
+			throw new MultipleEntitiesFoundError()
+		}
+
+		// Return the deleted document.
+		return documents[0]
+	}
+
+	// Destroy a single entity of the model matching the key.
+	destroyByKey(key: number | string, options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Call the destroy one method with only the key in the query.
+		return this.destroyOne({ key }, options)
+	}
+
 	// Update the entity indicated by the primary key that's part of the given document.
 	async save(document: {
 		key: number | string,
-	}) {
+	}, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
 		// Update the entity with the given document key using the given document values.
-		// TODO: Replace with update by key.
-		const documents = await this.update({
-			key: document.key,
-		}, lodash.pick(document, this.fieldNames()) as {})
+		const documents = await this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as {}, options)
 
 		// Return the first retrieved document.
 		return documents[0]
@@ -392,12 +487,12 @@ export abstract class Model {
 	// Destroy the entity indicated by the primary key that's part of the given document.
 	async delete(document: {
 		key: number | string,
-	}) {
-		// Destroy the row with the given document key.
-		// TODO: Replace with destroy by key.
-		const documents = await this.destroy({
-			key: document.key,
-		})
+	}, options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Destroy the entity with the given document key.
+		const documents = await this.destroyByKey(document.key, options)
 
 		// Return the first retrieved document.
 		return documents[0]
