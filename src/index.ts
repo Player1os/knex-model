@@ -1,15 +1,13 @@
-/* tslint:disable max-classes-per-file */
-
-// Load scoped modules.
-import BaseError from '@player1os/base-error'
+// Load app modules.
+import EntityExistsError from '#/src/error/entity_exists'
+import EntityNotFoundError from '#/src/error/entity_not_found'
+import MultipleEntitiesFoundError from '#/src/error/multiple_entities_found'
 
 // Load npm modules.
 import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
-// TODO: Split into multiple modules.
-// TODO: Make sure the typings are generated correctly.
 // TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
 // TODO: Add pagination.
@@ -17,58 +15,10 @@ import * as lodash from 'lodash'
 // TODO: Add column aliasing.
 // TODO: Add projection to find methods.
 
-// Expose the error class.
-export class EntityExistsError extends BaseError {
-	fieldName
-	constraint
-	fields
-	values
-	detail
-
-	constructor(knexError) {
-		// Call parent constructor.
-		super('An entity already exists with the submitted unique field values')
-
-		// Parse knex error.
-		const matches = knexError.detail.match(/^Key \((.*)\)=\((.*)\) already exists.$/)
-		const fields = matches[1].split(', ')
-
-		// Fill error properties.
-		this.constraint = knexError.constraint
-		this.fields = fields.map((field) => {
-			return `"${knexError.table}.${field}"`
-		}).join(', ')
-		this.values = matches[2].split(', ').map((value) => {
-			return `'${value}'`
-		}).join(', ')
-
-		this.detail = fields.reduce((accumulator, field) => {
-			accumulator[field] = {
-				input: this.values,
-				type: 'any.db_unique_constraint',
-				message: `A "${knexError.table}" entity already exists with the same value ${this.values}`
-					+ ` in the ${this.fields} field${(this.fields.length > 1) ? 's' : ''}`,
-			}
-			return accumulator
-		}, {})
-	}
-}
-
-// Expose the error class.
-export class EntityNotFoundError extends BaseError {
-	constructor() {
-		// Call parent constructor.
-		super('No entity exists that matches the submitted query')
-	}
-}
-
-// Expose the error class.
-export class MultipleEntitiesFoundError extends BaseError {
-	constructor() {
-		// Call parent constructor.
-		super('More than a single entity exists that matches the submitted query')
-	}
-}
+// Expose the imported error classes.
+export { EntityExistsError }
+export { EntityNotFoundError }
+export { MultipleEntitiesFoundError }
 
 // Expose the interface that defines the input values.
 export interface IValues {
@@ -80,8 +30,6 @@ export interface IQueryItem {
 	[key: string]: boolean | number | string | number[] | string[],
 }
 export type IQuery = IQueryItem | IQueryItem[]
-
-throw new Error('Just testing')
 
 // Expose the base model class.
 export abstract class Model {
