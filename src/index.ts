@@ -3,6 +3,11 @@ import EntityExistsError from '#/src/error/entity_exists'
 import EntityNotFoundError from '#/src/error/entity_not_found'
 import MultipleEntitiesFoundError from '#/src/error/multiple_entities_found'
 
+// Load scoped modules.
+import {
+	KnexWrapper,
+} from '@player1os/knex-wrapper'
+
 // Load npm modules.
 import * as Joi from 'joi'
 import * as Knex from 'knex'
@@ -39,9 +44,7 @@ export abstract class Model {
 
 	// A constructor that confirms that the required properties are present.
 	constructor(
-		protected knexWrapper: {
-			instance: Knex,
-		},
+		protected knexWrapper: KnexWrapper,
 		public table: string,
 		public fields: {
 			key: Joi.NumberSchema | Joi.StringSchema,
