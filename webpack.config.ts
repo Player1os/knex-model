@@ -1,9 +1,54 @@
+// Load npm modules.
+import * as cpr from 'cpr'
+import * as recursiveReaddirSync from 'recursive-readdir-sync'
+import * as rimraf from 'rimraf'
+import * as webpack from 'webpack'
+
 // Load node modules.
 import * as fs from 'fs'
 import * as path from 'path'
 
 // Load the package file.
 const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf-8'))
+
+// Declare a plugin for processing the outputed type declaration files.
+class TypescriptDeclarationFilePlugin {
+	apply(compiler: webpack.Compiler) {
+		// Schedule to execute after the compilation is done.
+		compiler.plugin('done', () => {
+			// Store the path to the type declaration files.
+			const originalTypeDeclarationsPath = path.join(__dirname, 'types', 'src')
+			const newTypeDeclarationsPath = path.join(__dirname, 'types')
+
+			// Copy all type declaration files to the new location.
+			cpr(originalTypeDeclarationsPath, newTypeDeclarationsPath, {
+				overwrite: true,
+			}, (err) => {
+				if (err) {
+					// Rethrow the error.
+					throw err
+				}
+
+				// Remove the original directory of the type declarations.
+				rimraf.sync(originalTypeDeclarationsPath)
+
+				// Find all the type declaration files.
+				{
+					(recursiveReaddirSync as (directoryPath: string) => string[])(newTypeDeclarationsPath)
+						.forEach((filePath) => {
+							// Determine the current module's depth relative to the src directory.
+							const depth = filePath.split(newTypeDeclarationsPath + path.sep)[1].split(path.sep).length - 1
+
+							// Replace the aliased paths with relative paths within the current module.
+							const depthSubPath = '../'.repeat(depth)
+							const alteredContents = fs.readFileSync(filePath, 'utf-8').replace(/#\/src\//g, `./${depthSubPath}`)
+							fs.writeFileSync(filePath, alteredContents, 'utf-8')
+						})
+				}
+			})
+		})
+	}
+}
 
 // Expose the configuration object.
 export default {
@@ -16,7 +61,7 @@ export default {
 		library: 'library',
 		libraryTarget: 'commonjs2',
 		// Define the directory for the compilation output.
-		path: path.join(__dirname, 'build', 'lib'),
+		path: __dirname,
 		// Define the name for the compilation output.
 		filename: 'index.js',
 	},
@@ -44,11 +89,14 @@ export default {
 				loader: 'awesome-typescript-loader',
 				options: {
 					declaration: true,
-					declarationDir: 'build/types',
+					declarationDir: 'types',
 				},
 			},
 		],
 	},
+	plugins: [
+		new TypescriptDeclarationFilePlugin(),
+	],
 	resolve: {
 		// Specify that the '#' character in imports should be resolved to the project's root path.
 		alias: {

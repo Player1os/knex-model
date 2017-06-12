@@ -1,7 +1,6 @@
 .awcache/
 .nyc_output/
 .vscode/
-build/
 coverage/
 src/
 test/
@@ -14,3 +13,4 @@ webpack/
 README.md
 tsconfig.json
 tslint.json
+webpack.config.ts

@@ -81,6 +81,8 @@ export interface IQueryItem {
 }
 export type IQuery = IQueryItem | IQueryItem[]
 
+throw new Error('Just testing')
+
 // Expose the base model class.
 export abstract class Model {
 	protected createValuesValidationSchema: Joi.ObjectSchema
