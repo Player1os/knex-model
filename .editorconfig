@@ -15,7 +15,7 @@ trim_trailing_whitespace = true
 [{**/.babelrc,**/*.json}]
 indent_size = 2
 
-[{build/**/*,lib/**/*,node_modules/**/*,package.json}]
+[{node_modules/**/*,package.json}]
 charset = none
 end_of_line = none
 indent_size = none
