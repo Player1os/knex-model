@@ -13,7 +13,7 @@ import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
-// TODO: Add method comments.
+// TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
 // TODO: Add pagination.
 // TODO: Add relations.
@@ -24,6 +24,11 @@ import * as lodash from 'lodash'
 export { EntityExistsError }
 export { EntityNotFoundError }
 export { MultipleEntitiesFoundError }
+
+// Expose the type that defines the outputs.
+export type IDocument = {
+	[key: string]: null | boolean | number | string | object | Date,
+}
 
 // Expose the type that defines the input values.
 export type IValues = {
@@ -132,7 +137,7 @@ export abstract class Model {
 	protected async create(values: IValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}): Promise<object[]> {
+	} = {}): Promise<IDocument[]> {
 		try {
 			// Optionally validate the create values.
 			if (!options.isValidationDisabled) {
@@ -265,7 +270,7 @@ export abstract class Model {
 		limit?: number,
 		offset?: number,
 		transaction?: Knex.Transaction,
-	} = {}): Promise<object[]> {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
@@ -389,7 +394,7 @@ export abstract class Model {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}): Promise<object[]> {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
@@ -465,7 +470,7 @@ export abstract class Model {
 	protected async destroy(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}): Promise<object[]> {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
