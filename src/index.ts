@@ -25,13 +25,18 @@ export { EntityExistsError }
 export { EntityNotFoundError }
 export { MultipleEntitiesFoundError }
 
-// Expose the interface that defines the input values.
-export interface IValues {
+// Expose the type that defines the outputs.
+export type IDocument = {
+	[key: string]: null | boolean | number | string | object | Date,
+}
+
+// Expose the type that defines the input values.
+export type IValues = {
 	[key: string]: boolean | number | string | object | Date,
 }
 
-// Expose the interface that defines the input query.
-export interface IQueryItem {
+// Expose the type that defines the input query.
+export type IQueryItem = {
 	[key: string]: null | boolean | number | string | Date | number[] | string[] | Date[],
 }
 export type IQuery = IQueryItem | IQueryItem[]
@@ -132,7 +137,7 @@ export abstract class Model {
 	protected async create(values: IValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}) {
+	} = {}): Promise<IDocument[]> {
 		try {
 			// Optionally validate the create values.
 			if (!options.isValidationDisabled) {
@@ -265,7 +270,7 @@ export abstract class Model {
 		limit?: number,
 		offset?: number,
 		transaction?: Knex.Transaction,
-	} = {}) {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
@@ -389,7 +394,7 @@ export abstract class Model {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}) {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
@@ -465,7 +470,7 @@ export abstract class Model {
 	protected async destroy(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
-	} = {}) {
+	} = {}): Promise<IDocument[]> {
 		// Optionally validate the query values.
 		if (!options.isValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)

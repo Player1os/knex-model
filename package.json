@@ -70,7 +70,8 @@
   },
   "dependencies": {
     "@player1os/base-error": "^1.0.3",
-    "@player1os/knex-wrapper": "^1.1.0",
+    "@player1os/knex-wrapper": "^1.1.1",
+    "@player1os/tslint-config": "^1.1.2",
     "joi": "^10.5.2"
   }
 }
