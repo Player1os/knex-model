@@ -338,7 +338,7 @@ export abstract class Model {
 	}
 
 	// Find the count of all entities of the model matching the query.
-	async count(query: IQuery, options: {
+	protected async count(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
