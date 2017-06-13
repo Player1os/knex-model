@@ -500,7 +500,7 @@ export abstract class Model {
 	}
 
 	// Update the entity indicated by the primary key that's part of the given document.
-	protected async save(document: {
+	protected save(document: {
 		key: number | string,
 	}, options: {
 		isQueryValidationDisabled?: boolean,
@@ -508,23 +508,17 @@ export abstract class Model {
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Update the entity with the given document key using the given document values.
-		const documents = await this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as {}, options)
-
-		// Return the first retrieved document.
-		return documents[0]
+		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as {}, options)
 	}
 
 	// Destroy the entity indicated by the primary key that's part of the given document.
-	protected async delete(document: {
+	protected delete(document: {
 		key: number | string,
 	}, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Destroy the entity with the given document key.
-		const documents = await this.destroyByKey(document.key, options)
-
-		// Return the first retrieved document.
-		return documents[0]
+		return this.destroyByKey(document.key, options)
 	}
 }
