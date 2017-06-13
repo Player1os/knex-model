@@ -22,12 +22,12 @@ export { MultipleEntitiesFoundError }
 
 // Expose the interface that defines the input values.
 export interface IValues {
-	[key: string]: boolean | number | string,
+	[key: string]: boolean | number | string | object | Date,
 }
 
 // Expose the interface that defines the input query.
 export interface IQueryItem {
-	[key: string]: boolean | number | string | number[] | string[],
+	[key: string]: null | boolean | number | string | Date | number[] | string[] | Date[],
 }
 export type IQuery = IQueryItem | IQueryItem[]
 
@@ -45,7 +45,7 @@ export abstract class Model {
 		public table: string,
 		public fields: {
 			key: Joi.NumberSchema | Joi.StringSchema,
-			[key: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema,
+			[key: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema | Joi.ObjectSchema | Joi.DateSchema,
 		},
 	) {
 		// Verify whether a table name is set.
