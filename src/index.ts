@@ -129,7 +129,7 @@ export abstract class Model {
 	}
 
 	// Create entities of the model using the provided values.
-	async create(values: IValues[], options: {
+	protected async create(values: IValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -173,7 +173,7 @@ export abstract class Model {
 	}
 
 	// Create a single entity of the model.
-	async createOne(values: IValues, options: {
+	protected async createOne(values: IValues, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -243,7 +243,7 @@ export abstract class Model {
 	}
 
 	// Find all entities of the model matching the query.
-	async find(query: IQuery, options: {
+	protected async find(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -295,7 +295,7 @@ export abstract class Model {
 	}
 
 	// Find a single entity of the model matching the query.
-	async findOne(query: IQuery, options: {
+	protected async findOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -323,7 +323,7 @@ export abstract class Model {
 	}
 
 	// Find a single entity of the model matching the key.
-	findByKey(key: number | string, options: {
+	protected findByKey(key: number | string, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -367,7 +367,7 @@ export abstract class Model {
 	}
 
 	// Update all entities of the model matching the query with the supplied values.
-	async update(query: IQuery, values: IValues, options: {
+	protected async update(query: IQuery, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -406,7 +406,7 @@ export abstract class Model {
 	}
 
 	// Update a single entity of the model matching the query with the supplied values.
-	async updateOne(query: IQuery, values: IValues, options: {
+	protected async updateOne(query: IQuery, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -429,7 +429,7 @@ export abstract class Model {
 	}
 
 	// Update a single entity of the model matching the key with the supplied values.
-	updateByKey(key: number | string, values: IValues, options: {
+	protected updateByKey(key: number | string, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -439,7 +439,7 @@ export abstract class Model {
 	}
 
 	// Destroy all entities of the model matching the query.
-	async destroy(query: IQuery, options: {
+	protected async destroy(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -469,7 +469,7 @@ export abstract class Model {
 	}
 
 	// Destroy a single entity of the model matching the query.
-	async destroyOne(query: IQuery, options: {
+	protected async destroyOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -491,7 +491,7 @@ export abstract class Model {
 	}
 
 	// Destroy a single entity of the model matching the key.
-	destroyByKey(key: number | string, options: {
+	protected destroyByKey(key: number | string, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -500,7 +500,7 @@ export abstract class Model {
 	}
 
 	// Update the entity indicated by the primary key that's part of the given document.
-	async save(document: {
+	protected async save(document: {
 		key: number | string,
 	}, options: {
 		isQueryValidationDisabled?: boolean,
@@ -515,7 +515,7 @@ export abstract class Model {
 	}
 
 	// Destroy the entity indicated by the primary key that's part of the given document.
-	async delete(document: {
+	protected async delete(document: {
 		key: number | string,
 	}, options: {
 		isValidationDisabled?: boolean,
