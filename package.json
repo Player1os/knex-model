@@ -1,6 +1,6 @@
 {
   "name": "@player1os/knex-model",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A a base class for models built on top of the knex query builder",
   "private": false,
   "main": "index.js",
@@ -70,6 +70,7 @@
   },
   "dependencies": {
     "@player1os/base-error": "^1.0.3",
+    "@player1os/knex-wrapper": "^1.1.0",
     "joi": "^10.5.2"
   }
 }
