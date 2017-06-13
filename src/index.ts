@@ -18,7 +18,7 @@ import * as lodash from 'lodash'
 // TODO: Add pagination.
 // TODO: Add relations.
 // TODO: Add column aliasing.
-// TODO: Add projection to find methods.
+// TODO: Add projection to all methods.
 
 // Expose the imported error classes.
 export { EntityExistsError }
@@ -173,17 +173,30 @@ export abstract class Model {
 	}
 
 	// Create a single entity of the model.
-	protected async createOne(values: IValues, options: {
+	protected createOne(values: IValues, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Attempt to create the document.
-		const documents = await this.create([values], options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Attempt to create the document.
+			const documents = await this.create([values], Object.assign({}, options, {
+				transaction,
+			}))
 
-		// TODO: Add a length check for the array.
+			// Check if at least one document was created.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Return the first created document.
-		return documents[0]
+			// Check if more than one value was created.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the first created document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	// Prepare a manipulator for a single knex query item.
@@ -295,7 +308,7 @@ export abstract class Model {
 	}
 
 	// Find a single entity of the model matching the query.
-	protected async findOne(query: IQuery, options: {
+	protected findOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -305,21 +318,26 @@ export abstract class Model {
 		offset?: number,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Attempt to find the document.
-		const documents = await this.find(query, options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Attempt to find the document.
+			const documents = await this.find(query, Object.assign({}, options, {
+				transaction,
+			}))
 
-		// Check if at least one document was found.
-		if (documents.length === 0) {
-			throw new EntityNotFoundError()
-		}
+			// Check if at least one document was found.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Check if more than one value was altered.
-		if (documents.length > 1) {
-			throw new MultipleEntitiesFoundError()
-		}
+			// Check if more than one value was found.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
 
-		// Return the first retrieved document.
-		return documents[0]
+			// Return the first found document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	// Find a single entity of the model matching the key.
@@ -406,26 +424,31 @@ export abstract class Model {
 	}
 
 	// Update a single entity of the model matching the query with the supplied values.
-	protected async updateOne(query: IQuery, values: IValues, options: {
+	protected updateOne(query: IQuery, values: IValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Exectute the update method with the submitted arguments.
-		const documents = await this.update(query, values, options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Execute the update method with the submitted arguments.
+			const documents = await this.update(query, values, Object.assign({}, options, {
+				transaction,
+			}))
 
-		// Check if at least one value was altered.
-		if (documents.length === 0) {
-			throw new EntityNotFoundError()
-		}
+			// Check if at least one value was updated.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Check if more than one value was altered.
-		if (documents.length > 1) {
-			throw new MultipleEntitiesFoundError()
-		}
+			// Check if more than one value was updated.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
 
-		// Return the altered document.
-		return documents[0]
+			// Return the updated document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	// Update a single entity of the model matching the key with the supplied values.
@@ -469,25 +492,30 @@ export abstract class Model {
 	}
 
 	// Destroy a single entity of the model matching the query.
-	protected async destroyOne(query: IQuery, options: {
+	protected destroyOne(query: IQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Exectute the update method with the submitted arguments.
-		const documents = await this.destroy(query, options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Execute the destroy method with the submitted arguments.
+			const documents = await this.destroy(query, Object.assign({}, options, {
+				transaction,
+			}))
 
-		// Check if at least one value was deleted.
-		if (documents.length === 0) {
-			throw new EntityNotFoundError()
-		}
+			// Check if at least one value was deleted.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Check if more than one value was deleted.
-		if (documents.length > 1) {
-			throw new MultipleEntitiesFoundError()
-		}
+			// Check if more than one value was deleted.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
 
-		// Return the deleted document.
-		return documents[0]
+			// Return the destroyed document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	// Destroy a single entity of the model matching the key.
