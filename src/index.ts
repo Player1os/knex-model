@@ -411,21 +411,27 @@ export abstract class Model {
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Exectute the update method with the submitted arguments.
-		const documents = await this.update(query, values, options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within.
+		const document = await this.knexWrapper.transaction(async () => {
+			// Execute the update method with the submitted arguments.
+			const documents = await this.update(query, values, options)
 
-		// Check if at least one value was altered.
-		if (documents.length === 0) {
-			throw new EntityNotFoundError()
-		}
+			// Check if at least one value was updated.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Check if more than one value was altered.
-		if (documents.length > 1) {
-			throw new MultipleEntitiesFoundError()
-		}
+			// Check if more than one value was updated.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
 
-		// Return the altered document.
-		return documents[0]
+			// Return the updated document.
+			return documents[0]
+		}, options.transaction)
+
+		// Return the updated document.
+		return document
 	}
 
 	// Update a single entity of the model matching the key with the supplied values.
@@ -473,21 +479,24 @@ export abstract class Model {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
-		// Exectute the update method with the submitted arguments.
-		const documents = await this.destroy(query, options)
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async () => {
+			// Execute the destroy method with the submitted arguments.
+			const documents = await this.destroy(query, options)
 
-		// Check if at least one value was deleted.
-		if (documents.length === 0) {
-			throw new EntityNotFoundError()
-		}
+			// Check if at least one value was deleted.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
 
-		// Check if more than one value was deleted.
-		if (documents.length > 1) {
-			throw new MultipleEntitiesFoundError()
-		}
+			// Check if more than one value was deleted.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
 
-		// Return the deleted document.
-		return documents[0]
+			// Return the destroyed document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	// Destroy a single entity of the model matching the key.
