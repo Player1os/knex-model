@@ -140,10 +140,6 @@ export abstract class Model {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}): Promise<IDocument[]> {
-		if (!this.knexWrapper.instance) {
-			throw new Error('The knex instance has not been initialized.')
-		}
-
 		try {
 			// Optionally validate the create values.
 			if (!options.isValidationDisabled) {
@@ -248,10 +244,6 @@ export abstract class Model {
 
 	// Prepare a pluggable knex query based on the query parameters.
 	protected prepareQueryParameters(query: IQuery) {
-		if (!this.knexWrapper.instance) {
-			throw new Error('The knex instance has not been initialized.')
-		}
-
 		// Define the initial query builder upon the model's table.
 		let knexQuery = this.knexWrapper.instance(this.table)
 
