@@ -100,7 +100,7 @@ export default {
 	resolve: {
 		// Specify that the '#' character in imports should be resolved to the project's root path.
 		alias: {
-			'#': __dirname,
+			'...': __dirname,
 		},
 		// Specify that the typescript and javascript extensions can be ommitted from module names.
 		extensions: [
