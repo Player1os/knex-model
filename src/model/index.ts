@@ -103,7 +103,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	protected async create(values: ICreateValues[], options: {
+	async create(values: ICreateValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -153,7 +153,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	protected async createOne(values: ICreateValues, options: {
+	async createOne(values: ICreateValues, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -175,6 +175,274 @@ export abstract class Model<
 			}
 
 			// Return the first created document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 * Find all entities of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	async find(query: IQueryItem | IQueryItem[], options: {
+		isValidationDisabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+		limit?: number,
+		offset?: number,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Optionally validate the query values.
+		if (!options.isValidationDisabled) {
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
+		}
+
+		// Prepare a selection query builder.
+		let knexQuery = this.prepareQueryParameters(query)
+			.select(this.fieldNames())
+
+		// Add the optional order by clause.
+		if (options.orderBy) {
+			options.orderBy.forEach((orderByClause) => {
+				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
+			})
+		}
+
+		// Add the optional limit clause.
+		if (options.limit) {
+			knexQuery = knexQuery.limit(options.limit)
+		}
+
+		// Add the optional offset clause.
+		if (options.offset) {
+			knexQuery = knexQuery.offset(options.offset)
+		}
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Execute the prepared query builder.
+		const documents = await knexQuery as IEntity[]
+
+		// Return the found documents.
+		return documents
+	}
+
+	/**
+	 * Find a single entity of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	async findOne(query: IQueryItem | IQueryItem[], options: {
+		isValidationDisabled?: boolean,
+		orderBy?: [{
+			column: string,
+			direction: string,
+		}],
+		limit?: number,
+		offset?: number,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Attempt to find the document.
+			const documents = await this.find(query, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one document was found.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was found.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the first found document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 * Find the count of all entities of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	async count(query: IQueryItem | IQueryItem[], options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Optionally validate the query values.
+		if (!options.isValidationDisabled) {
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
+		}
+
+		// Prepare a selection query builder.
+		let knexQuery = this.prepareQueryParameters(query)
+			.count()
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Execute the prepared query builder.
+		const result = await knexQuery
+
+		// Parse the result of the count query.
+		return parseInt(result[0].count, 10)
+	}
+
+	/**
+	 * Update all entities of the model matching the query with the supplied values.
+	 * @param query
+	 * @param values
+	 * @param options
+	 */
+	async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Optionally validate the query values.
+		if (!options.isQueryValidationDisabled) {
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
+		}
+
+		// Optionally validate the update values.
+		if (!options.isValuesValidationDisabled) {
+			const { error } = this.updateValuesValidationSchema.validate(values)
+			if (error) {
+				throw error
+			}
+		}
+
+		// Prepare an update query builder.
+		let knexQuery = this.prepareQueryParameters(query)
+			.update(values)
+			.returning(this.fieldNames())
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Return the prepared query builder.
+		const documents = await knexQuery as IEntity[]
+
+		// Return the updated documents.
+		return documents
+	}
+
+	/**
+	 * Update a single entity of the model matching the query with the supplied values.
+	 * @param query
+	 * @param values
+	 * @param options
+	 */
+	async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
+		isQueryValidationDisabled?: boolean,
+		isValuesValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Execute the update method with the submitted arguments.
+			const documents = await this.update(query, values, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one value was updated.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was updated.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the updated document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 * Destroy all entities of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	async destroy(query: IQueryItem | IQueryItem[], options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Optionally validate the query values.
+		if (!options.isValidationDisabled) {
+			const { error } = this.queryValidationSchema.validate(query)
+			if (error) {
+				throw error
+			}
+		}
+
+		// Prepare a deletion query builder.
+		let knexQuery = this.prepareQueryParameters(query)
+			.delete()
+			.returning(this.fieldNames())
+
+		// Optionally use the supplied transaction.
+		if (options.transaction) {
+			knexQuery = knexQuery.transacting(options.transaction)
+		}
+
+		// Return the prepared query builder.
+		const documents = await knexQuery as IEntity[]
+
+		// Return the destroyed documents.
+		return documents
+	}
+
+	/**
+	 * Destroy a single entity of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	async destroyOne(query: IQueryItem | IQueryItem[], options: {
+		isValidationDisabled?: boolean,
+		transaction?: Knex.Transaction,
+	} = {}) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this.knexWrapper.transaction(async (transaction) => {
+			// Execute the destroy method with the submitted arguments.
+			const documents = await this.destroy(query, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one value was deleted.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was deleted.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the destroyed document.
 			return documents[0]
 		}, options.transaction)
 	}
@@ -240,273 +508,5 @@ export abstract class Model<
 
 		// Return the prepared query builder.
 		return knexQuery
-	}
-
-	/**
-	 * Find all entities of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async find(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-		limit?: number,
-		offset?: number,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
-			const { error } = this.queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Prepare a selection query builder.
-		let knexQuery = this.prepareQueryParameters(query)
-			.select(this.fieldNames())
-
-		// Add the optional order by clause.
-		if (options.orderBy) {
-			options.orderBy.forEach((orderByClause) => {
-				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
-			})
-		}
-
-		// Add the optional limit clause.
-		if (options.limit) {
-			knexQuery = knexQuery.limit(options.limit)
-		}
-
-		// Add the optional offset clause.
-		if (options.offset) {
-			knexQuery = knexQuery.offset(options.offset)
-		}
-
-		// Optionally use the supplied transaction.
-		if (options.transaction) {
-			knexQuery = knexQuery.transacting(options.transaction)
-		}
-
-		// Execute the prepared query builder.
-		const documents = await knexQuery as IEntity[]
-
-		// Return the found documents.
-		return documents
-	}
-
-	/**
-	 * Find a single entity of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async findOne(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-		limit?: number,
-		offset?: number,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this.knexWrapper.transaction(async (transaction) => {
-			// Attempt to find the document.
-			const documents = await this.find(query, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one document was found.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was found.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the first found document.
-			return documents[0]
-		}, options.transaction)
-	}
-
-	/**
-	 * Find the count of all entities of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async count(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
-			const { error } = this.queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Prepare a selection query builder.
-		let knexQuery = this.prepareQueryParameters(query)
-			.count()
-
-		// Optionally use the supplied transaction.
-		if (options.transaction) {
-			knexQuery = knexQuery.transacting(options.transaction)
-		}
-
-		// Execute the prepared query builder.
-		const result = await knexQuery
-
-		// Parse the result of the count query.
-		return parseInt(result[0].count, 10)
-	}
-
-	/**
-	 * Update all entities of the model matching the query with the supplied values.
-	 * @param query
-	 * @param values
-	 * @param options
-	 */
-	protected async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Optionally validate the query values.
-		if (!options.isQueryValidationDisabled) {
-			const { error } = this.queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Optionally validate the update values.
-		if (!options.isValuesValidationDisabled) {
-			const { error } = this.updateValuesValidationSchema.validate(values)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Prepare an update query builder.
-		let knexQuery = this.prepareQueryParameters(query)
-			.update(values)
-			.returning(this.fieldNames())
-
-		// Optionally use the supplied transaction.
-		if (options.transaction) {
-			knexQuery = knexQuery.transacting(options.transaction)
-		}
-
-		// Return the prepared query builder.
-		const documents = await knexQuery as IEntity[]
-
-		// Return the updated documents.
-		return documents
-	}
-
-	/**
-	 * Update a single entity of the model matching the query with the supplied values.
-	 * @param query
-	 * @param values
-	 * @param options
-	 */
-	protected async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this.knexWrapper.transaction(async (transaction) => {
-			// Execute the update method with the submitted arguments.
-			const documents = await this.update(query, values, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one value was updated.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was updated.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the updated document.
-			return documents[0]
-		}, options.transaction)
-	}
-
-	/**
-	 * Destroy all entities of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async destroy(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
-			const { error } = this.queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Prepare a deletion query builder.
-		let knexQuery = this.prepareQueryParameters(query)
-			.delete()
-			.returning(this.fieldNames())
-
-		// Optionally use the supplied transaction.
-		if (options.transaction) {
-			knexQuery = knexQuery.transacting(options.transaction)
-		}
-
-		// Return the prepared query builder.
-		const documents = await knexQuery as IEntity[]
-
-		// Return the destroyed documents.
-		return documents
-	}
-
-	/**
-	 * Destroy a single entity of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async destroyOne(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this.knexWrapper.transaction(async (transaction) => {
-			// Execute the destroy method with the submitted arguments.
-			const documents = await this.destroy(query, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one value was deleted.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was deleted.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the destroyed document.
-			return documents[0]
-		}, options.transaction)
 	}
 }

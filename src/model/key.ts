@@ -82,7 +82,7 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	protected async findByKey(key: TKey, options: {
+	async findByKey(key: TKey, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -102,7 +102,7 @@ export abstract class KeyModel<
 	 * @param values
 	 * @param options
 	 */
-	protected async updateByKey(key: TKey, values: IUpdateValues, options: {
+	async updateByKey(key: TKey, values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -116,7 +116,7 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	protected async destroyByKey(key: TKey, options: {
+	async destroyByKey(key: TKey, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -129,7 +129,7 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	protected async save(document: IEntity, options: {
+	async save(document: IEntity, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -143,7 +143,7 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	protected async delete(document: IEntity, options: {
+	async delete(document: IEntity, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
