@@ -13,8 +13,12 @@ import * as lodash from 'lodash'
 export type TKey = number | string
 
 // Expose the base model class.
-export abstract class KeyModel<IEntity extends { key: TKey }, ICreateValues extends object, IUpdateValues extends { key?: TKey }>
-	extends Model<IEntity, ICreateValues, IUpdateValues> {
+export abstract class KeyModel<
+	IEntity extends { key: TKey },
+	ICreateValues extends object,
+	IUpdateValues extends object,
+	IQueryItem extends { key?: TKey }
+	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
@@ -89,7 +93,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }, ICreateValues exte
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the find one method with only the key in the query.
-		return this.findOne({ key } as object, options)
+		return this.findOne({ key } as IQueryItem, options)
 	}
 
 	/**
@@ -104,7 +108,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }, ICreateValues exte
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the update one method with only the key in the query.
-		return this.updateOne({ key } as object, values, options)
+		return this.updateOne({ key } as IQueryItem, values, options)
 	}
 
 	/**
@@ -117,7 +121,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }, ICreateValues exte
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the destroy one method with only the key in the query.
-		return this.destroyOne({ key } as object, options)
+		return this.destroyOne({ key } as IQueryItem, options)
 	}
 
 	/**

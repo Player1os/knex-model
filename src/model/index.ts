@@ -23,7 +23,13 @@ import * as lodash from 'lodash'
 export type TQuery = object | object[]
 
 // Expose the base model class.
-export abstract class Model<IEntity extends object, ICreateValues extends object, IUpdateValues extends object> {
+export abstract class Model<
+	IEntity extends object,
+	ICreateValues extends object,
+	IUpdateValues extends object,
+	IQueryItem extends object
+// tslint:disable-next-line:one-line
+> {
 	protected readonly queryValidationSchema: Joi.Schema
 
 	/**
@@ -178,7 +184,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param knexQuery
 	 * @param queryItem
 	 */
-	protected prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: object) {
+	protected prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: IQueryItem) {
 		let newKnexQuery = knexQuery
 
 		lodash.forEach(queryItem, (value, key) => {
@@ -217,7 +223,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * Prepare a pluggable knex query based on the query parameters.
 	 * @param query
 	 */
-	protected prepareQueryParameters(query: TQuery) {
+	protected prepareQueryParameters(query: IQueryItem | IQueryItem[]) {
 		// Define the initial query builder upon the model's table.
 		let knexQuery = this.knexWrapper.instance(this.table)
 
@@ -241,7 +247,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async find(query: TQuery, options: {
+	protected async find(query: IQueryItem | IQueryItem[], options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -297,7 +303,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async findOne(query: TQuery, options: {
+	protected async findOne(query: IQueryItem | IQueryItem[], options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -334,7 +340,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async count(query: TQuery, options: {
+	protected async count(query: IQueryItem | IQueryItem[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -368,7 +374,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async update(query: TQuery, values: IUpdateValues, options: {
+	protected async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -412,7 +418,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async updateOne(query: TQuery, values: IUpdateValues, options: {
+	protected async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -444,7 +450,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async destroy(query: TQuery, options: {
+	protected async destroy(query: IQueryItem | IQueryItem[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -478,7 +484,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async destroyOne(query: TQuery, options: {
+	protected async destroyOne(query: IQueryItem | IQueryItem[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
