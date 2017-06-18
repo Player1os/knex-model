@@ -41,7 +41,7 @@ class TypescriptDeclarationFilePlugin {
 
 							// Replace the aliased paths with relative paths within the current module.
 							const depthSubPath = '../'.repeat(depth)
-							const alteredContents = fs.readFileSync(filePath, 'utf-8').replace(/#\/src\//g, `./${depthSubPath}`)
+							const alteredContents = fs.readFileSync(filePath, 'utf-8').replace(/...\/src\//g, `./${depthSubPath}`)
 							fs.writeFileSync(filePath, alteredContents, 'utf-8')
 						})
 				}
