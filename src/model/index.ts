@@ -11,8 +11,6 @@ import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
-// TODO: Disallow the use of null.
-// TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
 // TODO: Add pagination.
 // TODO: Add relations.
@@ -23,13 +21,7 @@ import * as lodash from 'lodash'
 export type TQuery = object | object[]
 
 // Expose the base model class.
-export abstract class Model<
-	IEntity extends object,
-	ICreateValues extends object,
-	IUpdateValues extends object,
-	IQueryItem extends object
-// tslint:disable-next-line:one-line
-> {
+export abstract class Model<IEntity extends object> {
 	protected readonly queryValidationSchema: Joi.Schema
 
 	/**
@@ -103,7 +95,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	async create(values: ICreateValues[], options: {
+	protected async create(values: object[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -153,7 +145,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	async createOne(values: ICreateValues, options: {
+	protected async createOne(values: object, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -184,7 +176,7 @@ export abstract class Model<
 	 * @param query
 	 * @param options
 	 */
-	async find(query: IQueryItem | IQueryItem[], options: {
+	protected async find(query: TQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -240,7 +232,7 @@ export abstract class Model<
 	 * @param query
 	 * @param options
 	 */
-	async findOne(query: IQueryItem | IQueryItem[], options: {
+	protected async findOne(query: TQuery, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -277,7 +269,7 @@ export abstract class Model<
 	 * @param query
 	 * @param options
 	 */
-	async count(query: IQueryItem | IQueryItem[], options: {
+	protected async count(query: TQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -311,7 +303,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
+	protected async update(query: TQuery, values: object, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -355,7 +347,7 @@ export abstract class Model<
 	 * @param values
 	 * @param options
 	 */
-	async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
+	protected async updateOne(query: TQuery, values: object, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -387,7 +379,7 @@ export abstract class Model<
 	 * @param query
 	 * @param options
 	 */
-	async destroy(query: IQueryItem | IQueryItem[], options: {
+	protected async destroy(query: TQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -421,7 +413,7 @@ export abstract class Model<
 	 * @param query
 	 * @param options
 	 */
-	async destroyOne(query: IQueryItem | IQueryItem[], options: {
+	protected async destroyOne(query: TQuery, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -452,7 +444,7 @@ export abstract class Model<
 	 * @param knexQuery
 	 * @param queryItem
 	 */
-	protected prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: IQueryItem) {
+	protected prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: object) {
 		let newKnexQuery = knexQuery
 
 		lodash.forEach(queryItem, (value, key) => {
@@ -491,7 +483,7 @@ export abstract class Model<
 	 * Prepare a pluggable knex query based on the query parameters.
 	 * @param query
 	 */
-	protected prepareQueryParameters(query: IQueryItem | IQueryItem[]) {
+	protected prepareQueryParameters(query: TQuery) {
 		// Define the initial query builder upon the model's table.
 		let knexQuery = this.knexWrapper.instance(this.table)
 

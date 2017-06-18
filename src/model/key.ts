@@ -13,12 +13,7 @@ import * as lodash from 'lodash'
 export type TKey = number | string
 
 // Expose the base model class.
-export abstract class KeyModel<
-	IEntity extends { key: TKey },
-	ICreateValues extends object,
-	IUpdateValues extends object,
-	IQueryItem extends { key?: TKey }
-	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
+export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEntity> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
@@ -82,7 +77,7 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	async findByKey(key: TKey, options: {
+	protected async findByKey(key: TKey, options: {
 		isValidationDisabled?: boolean,
 		orderBy?: [{
 			column: string,
@@ -93,7 +88,7 @@ export abstract class KeyModel<
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the find one method with only the key in the query.
-		return this.findOne({ key } as IQueryItem, options)
+		return this.findOne({ key } as object, options)
 	}
 
 	/**
@@ -102,13 +97,13 @@ export abstract class KeyModel<
 	 * @param values
 	 * @param options
 	 */
-	async updateByKey(key: TKey, values: IUpdateValues, options: {
+	protected async updateByKey(key: TKey, values: object, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the update one method with only the key in the query.
-		return this.updateOne({ key } as IQueryItem, values, options)
+		return this.updateOne({ key } as object, values, options)
 	}
 
 	/**
@@ -116,12 +111,12 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	async destroyByKey(key: TKey, options: {
+	protected async destroyByKey(key: TKey, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Call the destroy one method with only the key in the query.
-		return this.destroyOne({ key } as IQueryItem, options)
+		return this.destroyOne({ key } as object, options)
 	}
 
 	/**
@@ -129,13 +124,13 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	async save(document: IEntity, options: {
+	protected async save(document: IEntity, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Update the entity with the given document key using the given document values.
-		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as IUpdateValues, options)
+		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as object, options)
 	}
 
 	/**
@@ -143,7 +138,7 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	async delete(document: IEntity, options: {
+	protected async delete(document: IEntity, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
