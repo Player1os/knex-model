@@ -1,5 +1,16 @@
-// Export the model classes.
-export { KeyModel } from '.../src/model/key'
+// Export the model classes, interfaces and types.
+export {
+	ICreateOptions,
+	IFindOptions,
+	ICountOptions,
+	IUpdateOptions,
+	IDestroyOptions,
+} from '.../src/model'
+export {
+	KeyModel,
+	TKey,
+	TKeyArray,
+} from '.../src/model/key'
 export { StandardModel } from '.../src/model/standard'
 
 // Expose the error classes.
