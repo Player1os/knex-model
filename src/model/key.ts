@@ -9,11 +9,12 @@ import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
-// Expose the type that defines the table key.
+// Expose the type that defines the table key and array of table keys.
 export type TKey = number | string
+export type TKeyArray = number[] | string[]
 
 // Expose the base model class.
-export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEntity> {
+export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEntity, object, object, { key?: TKey | TKeyArray }> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
