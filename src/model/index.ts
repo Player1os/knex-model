@@ -11,9 +11,6 @@ import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
-// TODO: Revise validation.
-// TODO: Revise types.
-// TODO: Add update values type.
 // TODO: Disallow the use of null.
 // TODO: Elaborate on the type of the inputs.
 // TODO: Enable the use of a raw where caluse.
@@ -26,7 +23,7 @@ import * as lodash from 'lodash'
 export type TQuery = object | object[]
 
 // Expose the base model class.
-export abstract class Model {
+export abstract class Model<IEntity extends object, ICreateValues extends object, IUpdateValues extends object> {
 	protected readonly queryValidationSchema: Joi.Schema
 
 	/**
@@ -100,7 +97,7 @@ export abstract class Model {
 	 * @param values
 	 * @param options
 	 */
-	protected async create(values: object[], options: {
+	protected async create(values: ICreateValues[], options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -126,7 +123,7 @@ export abstract class Model {
 			}
 
 			// Execute the prepared query builder.
-			const documents = await knexQuery as object[]
+			const documents = await knexQuery as IEntity[]
 
 			// Return the created documents.
 			return documents
@@ -150,7 +147,7 @@ export abstract class Model {
 	 * @param values
 	 * @param options
 	 */
-	protected async createOne(values: object, options: {
+	protected async createOne(values: ICreateValues, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
@@ -289,7 +286,7 @@ export abstract class Model {
 		}
 
 		// Execute the prepared query builder.
-		const documents = await knexQuery as object[]
+		const documents = await knexQuery as IEntity[]
 
 		// Return the found documents.
 		return documents
@@ -371,7 +368,7 @@ export abstract class Model {
 	 * @param values
 	 * @param options
 	 */
-	protected async update(query: TQuery, values: object, options: {
+	protected async update(query: TQuery, values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -403,7 +400,7 @@ export abstract class Model {
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as object[]
+		const documents = await knexQuery as IEntity[]
 
 		// Return the updated documents.
 		return documents
@@ -415,7 +412,7 @@ export abstract class Model {
 	 * @param values
 	 * @param options
 	 */
-	protected async updateOne(query: TQuery, values: object, options: {
+	protected async updateOne(query: TQuery, values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -470,7 +467,7 @@ export abstract class Model {
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as object[]
+		const documents = await knexQuery as IEntity[]
 
 		// Return the destroyed documents.
 		return documents

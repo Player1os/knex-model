@@ -13,7 +13,8 @@ import * as lodash from 'lodash'
 export type TKey = number | string
 
 // Expose the base model class.
-export abstract class KeyModel extends Model {
+export abstract class KeyModel<IEntity extends { key: TKey }, ICreateValues extends object, IUpdateValues extends { key?: TKey }>
+	extends Model<IEntity, ICreateValues, IUpdateValues> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
@@ -97,7 +98,7 @@ export abstract class KeyModel extends Model {
 	 * @param values
 	 * @param options
 	 */
-	protected async updateByKey(key: TKey, values: object, options: {
+	protected async updateByKey(key: TKey, values: IUpdateValues, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
@@ -124,13 +125,13 @@ export abstract class KeyModel extends Model {
 	 * @param document
 	 * @param options
 	 */
-	protected async save(document: { key: TKey }, options: {
+	protected async save(document: IEntity, options: {
 		isQueryValidationDisabled?: boolean,
 		isValuesValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {
 		// Update the entity with the given document key using the given document values.
-		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as {}, options)
+		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as IUpdateValues, options)
 	}
 
 	/**
@@ -138,7 +139,7 @@ export abstract class KeyModel extends Model {
 	 * @param document
 	 * @param options
 	 */
-	protected async delete(document: { key: TKey }, options: {
+	protected async delete(document: IEntity, options: {
 		isValidationDisabled?: boolean,
 		transaction?: Knex.Transaction,
 	} = {}) {

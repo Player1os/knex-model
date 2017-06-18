@@ -8,7 +8,8 @@ import { KnexWrapper } from '@player1os/knex-wrapper'
 import * as Joi from 'joi'
 
 // Expose the base model class.
-export abstract class StandardModel extends Model {
+export abstract class StandardModel<IEntity extends object, ICreateValues extends object, IUpdateValues extends object>
+	extends Model<IEntity, ICreateValues, IUpdateValues> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
