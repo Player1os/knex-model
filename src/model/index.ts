@@ -17,6 +17,33 @@ import * as lodash from 'lodash'
 // TODO: Add column aliasing.
 // TODO: Add projection to all methods.
 
+// Declare and expose the interfaces for options.
+export interface IOptions {
+	transaction?: Knex.Transaction,
+}
+export interface ICreateOptions extends IOptions {
+	isCreateValuesValidationDisabled?: boolean,
+}
+export interface IFindOptions extends IOptions {
+	isQueryValidationDisabled?: boolean,
+	orderBy?: [{
+		column: string,
+		direction: string,
+	}],
+	limit?: number,
+	offset?: number,
+}
+export interface ICountOptions extends IOptions {
+	isQueryValidationDisabled?: boolean,
+}
+export interface IUpdateOptions extends IOptions {
+	isQueryValidationDisabled?: boolean,
+	isUpdateValuesValidationDisabled?: boolean,
+}
+export interface IDestroyOptions extends IOptions {
+	isQueryValidationDisabled?: boolean,
+}
+
 // Expose the base model class.
 export abstract class Model<IEntity extends object, ICreateValues extends object, IUpdateValues extends object, IQueryItem extends object> {
 	protected readonly queryValidationSchema: Joi.Schema
@@ -92,13 +119,10 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async create(values: ICreateValues[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async create(values: ICreateValues[], options: ICreateOptions = {}) {
 		try {
 			// Optionally validate the create values.
-			if (!options.isValidationDisabled) {
+			if (!options.isCreateValuesValidationDisabled) {
 				values.forEach((valuesEntry) => {
 					const { error } = this.createValuesValidationSchema.validate(valuesEntry)
 					if (error) {
@@ -142,10 +166,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async createOne(values: ICreateValues, options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async createOne(values: ICreateValues, options: ICreateOptions = {}) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this.knexWrapper.transaction(async (transaction) => {
 			// Attempt to create the document.
@@ -173,18 +194,9 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async find(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-		limit?: number,
-		offset?: number,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async find(query: IQueryItem | IQueryItem[], options: IFindOptions = {}) {
 		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
+		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
 			if (error) {
 				throw error
@@ -229,16 +241,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async findOne(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-		limit?: number,
-		offset?: number,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async findOne(query: IQueryItem | IQueryItem[], options: IFindOptions = {}) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this.knexWrapper.transaction(async (transaction) => {
 			// Attempt to find the document.
@@ -266,12 +269,9 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async count(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async count(query: IQueryItem | IQueryItem[], options: ICountOptions = {}) {
 		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
+		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
 			if (error) {
 				throw error
@@ -300,11 +300,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: IUpdateOptions = {}) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
@@ -314,7 +310,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 		}
 
 		// Optionally validate the update values.
-		if (!options.isValuesValidationDisabled) {
+		if (!options.isUpdateValuesValidationDisabled) {
 			const { error } = this.updateValuesValidationSchema.validate(values)
 			if (error) {
 				throw error
@@ -344,11 +340,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: IUpdateOptions = {}) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this.knexWrapper.transaction(async (transaction) => {
 			// Execute the update method with the submitted arguments.
@@ -376,12 +368,9 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async destroy(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async destroy(query: IQueryItem | IQueryItem[], options: IDestroyOptions = {}) {
 		// Optionally validate the query values.
-		if (!options.isValidationDisabled) {
+		if (!options.isQueryValidationDisabled) {
 			const { error } = this.queryValidationSchema.validate(query)
 			if (error) {
 				throw error
@@ -410,10 +399,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async destroyOne(query: IQueryItem | IQueryItem[], options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async destroyOne(query: IQueryItem | IQueryItem[], options: IDestroyOptions = {}) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this.knexWrapper.transaction(async (transaction) => {
 			// Execute the destroy method with the submitted arguments.

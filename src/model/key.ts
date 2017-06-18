@@ -1,12 +1,16 @@
 // Load app modules.
-import { Model } from '.../src/model'
+import {
+	IDestroyOptions,
+	IFindOptions,
+	IUpdateOptions,
+	Model,
+} from '.../src/model'
 
 // Load scoped modules.
 import { KnexWrapper } from '@player1os/knex-wrapper'
 
 // Load npm modules.
 import * as Joi from 'joi'
-import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
 // Expose the type that defines the table key and array of table keys.
@@ -78,16 +82,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param key
 	 * @param options
 	 */
-	protected async findByKey(key: TKey, options: {
-		isValidationDisabled?: boolean,
-		orderBy?: [{
-			column: string,
-			direction: string,
-		}],
-		limit?: number,
-		offset?: number,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async findByKey(key: TKey, options: IFindOptions = {}) {
 		// Call the find one method with only the key in the query.
 		return this.findOne({ key } as object, options)
 	}
@@ -98,11 +93,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param values
 	 * @param options
 	 */
-	protected async updateByKey(key: TKey, values: object, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async updateByKey(key: TKey, values: object, options: IUpdateOptions = {}) {
 		// Call the update one method with only the key in the query.
 		return this.updateOne({ key } as object, values, options)
 	}
@@ -112,10 +103,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param key
 	 * @param options
 	 */
-	protected async destroyByKey(key: TKey, options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async destroyByKey(key: TKey, options: IDestroyOptions = {}) {
 		// Call the destroy one method with only the key in the query.
 		return this.destroyOne({ key } as object, options)
 	}
@@ -125,11 +113,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param document
 	 * @param options
 	 */
-	protected async save(document: IEntity, options: {
-		isQueryValidationDisabled?: boolean,
-		isValuesValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async save(document: IEntity, options: IUpdateOptions = {}) {
 		// Update the entity with the given document key using the given document values.
 		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as object, options)
 	}
@@ -139,10 +123,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param document
 	 * @param options
 	 */
-	protected async delete(document: IEntity, options: {
-		isValidationDisabled?: boolean,
-		transaction?: Knex.Transaction,
-	} = {}) {
+	protected async delete(document: IEntity, options: IDestroyOptions = {}) {
 		// Destroy the entity with the given document key.
 		return this.destroyByKey(document.key, options)
 	}
