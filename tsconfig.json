@@ -9,6 +9,7 @@
 		"baseUrl": ".",
 		"module": "commonjs",
 		"noImplicitAny": false,
+		"noImplicitThis": false,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"paths": {
@@ -19,8 +20,8 @@
 				"./*"
 			]
 		},
-		"strictNullChecks": true,
 		"sourceMap": true,
+		"strictNullChecks": true,
 		"target": "es2015",
 		"typeRoots": [
 			"node_modules/@types"
