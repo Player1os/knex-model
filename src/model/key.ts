@@ -28,7 +28,7 @@ export abstract class KeyModel<
 		IEntity extends IKey,
 		ICreateValues extends object,
 		IUpdateValues extends object,
-		IQueryItem extends (IKey | IKeyArray),
+		IQueryItem extends (IKey | IKeyArray)
 	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.

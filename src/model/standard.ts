@@ -12,7 +12,7 @@ export abstract class StandardModel<
 		IEntity extends object,
 		ICreateValues extends object,
 		IUpdateValues extends object,
-		IQueryItem extends object,
+		IQueryItem extends object
 	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
