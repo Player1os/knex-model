@@ -16,9 +16,20 @@ import * as lodash from 'lodash'
 // Expose the type that defines the table key and array of table keys.
 export type TKey = number | string
 export type TKeyArray = number[] | string[]
+interface IKey {
+	key: TKey
+}
+interface IKeyArray {
+	key: TKeyArray
+}
 
 // Expose the base model class.
-export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEntity, object, object, { key?: TKey | TKeyArray }> {
+export abstract class KeyModel<
+		IEntity extends IKey,
+		ICreateValues extends object,
+		IUpdateValues extends object,
+		IQueryItem extends (IKey | IKeyArray),
+	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
@@ -26,7 +37,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param fields The names and validation schemas of the table's fields.
 	 */
 	constructor(
-		knexWrapper: KnexWrapper,
+		_knexWrapper: KnexWrapper,
 		table: string,
 		fields: {
 			key: Joi.NumberSchema | Joi.StringSchema,
@@ -34,7 +45,7 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 		},
 	) {
 		// Call the parent constructor.
-		super(knexWrapper, table, fields,
+		super(_knexWrapper, table, fields,
 			// Define validator from the schema for the create values.
 			// - all required fields must be present.
 			// - all specified keys must correspond to fields.
@@ -82,9 +93,9 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param key
 	 * @param options
 	 */
-	protected async findByKey(key: TKey, options: IFindOptions = {}) {
+	protected async _findByKey(key: TKey, options: IFindOptions = {}) {
 		// Call the find one method with only the key in the query.
-		return this.findOne({ key } as object, options)
+		return this._findOne({ key } as IQueryItem, options)
 	}
 
 	/**
@@ -93,9 +104,9 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param values
 	 * @param options
 	 */
-	protected async updateByKey(key: TKey, values: object, options: IUpdateOptions = {}) {
+	protected async _updateByKey(key: TKey, values: IUpdateValues, options: IUpdateOptions = {}) {
 		// Call the update one method with only the key in the query.
-		return this.updateOne({ key } as object, values, options)
+		return this._updateOne({ key } as IQueryItem, values, options)
 	}
 
 	/**
@@ -103,9 +114,9 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param key
 	 * @param options
 	 */
-	protected async destroyByKey(key: TKey, options: IDestroyOptions = {}) {
+	protected async _destroyByKey(key: TKey, options: IDestroyOptions = {}) {
 		// Call the destroy one method with only the key in the query.
-		return this.destroyOne({ key } as object, options)
+		return this._destroyOne({ key } as IQueryItem, options)
 	}
 
 	/**
@@ -113,9 +124,9 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param document
 	 * @param options
 	 */
-	protected async save(document: IEntity, options: IUpdateOptions = {}) {
+	protected async _save(document: IEntity, options: IUpdateOptions = {}) {
 		// Update the entity with the given document key using the given document values.
-		return this.updateByKey(document.key, lodash.pick(document, this.fieldNames()) as object, options)
+		return this._updateByKey(document.key, lodash.pick(document, this.fieldNames()) as IUpdateValues, options)
 	}
 
 	/**
@@ -123,8 +134,8 @@ export abstract class KeyModel<IEntity extends { key: TKey }> extends Model<IEnt
 	 * @param document
 	 * @param options
 	 */
-	protected async delete(document: IEntity, options: IDestroyOptions = {}) {
+	protected async _delete(document: IEntity, options: IDestroyOptions = {}) {
 		// Destroy the entity with the given document key.
-		return this.destroyByKey(document.key, options)
+		return this._destroyByKey(document.key, options)
 	}
 }

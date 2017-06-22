@@ -8,7 +8,12 @@ import { KnexWrapper } from '@player1os/knex-wrapper'
 import * as Joi from 'joi'
 
 // Expose the base model class.
-export abstract class StandardModel<IEntity extends object> extends Model<IEntity, object, object, object> {
+export abstract class StandardModel<
+		IEntity extends object,
+		ICreateValues extends object,
+		IUpdateValues extends object,
+		IQueryItem extends object,
+	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.
@@ -16,14 +21,14 @@ export abstract class StandardModel<IEntity extends object> extends Model<IEntit
 	 * @param fields The names and validation schemas of the table's fields.
 	 */
 	constructor(
-		knexWrapper: KnexWrapper,
+		_knexWrapper: KnexWrapper,
 		table: string,
 		fields: {
 			[fieldName: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema | Joi.ObjectSchema | Joi.DateSchema,
 		},
 	) {
 		// Call the parent constructor.
-		super(knexWrapper, table, fields,
+		super(_knexWrapper, table, fields,
 			// Define validator from the schema for the create values.
 			// - all non-optional fields must be present.
 			// - all specified keys must correspond to fields.
