@@ -13,9 +13,12 @@ import { KnexWrapper } from '@player1os/knex-wrapper'
 import * as Joi from 'joi'
 import * as lodash from 'lodash'
 
-// Expose the type that defines the table key and array of table keys.
+// Define and expose the types that describe the table key and array of table keys.
 export type TKey = number | string
 export type TKeyArray = number[] | string[]
+
+// Define the interfaces that describe entities and query items containing
+// the table key or an array of table keys.
 interface IKey {
 	key: TKey
 }
