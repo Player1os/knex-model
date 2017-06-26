@@ -17,20 +17,20 @@ import * as lodash from 'lodash'
 export type TKey = number | string
 export type TKeyArray = number[] | string[]
 
-// Define the interfaces that describe entities and query items containing the table key or an array of table keys.
-export interface IKey {
-	key: TKey
+// Define the interfaces that describe input values and query items containing the table key or an array of table keys.
+export interface IKeyEntity {
+	key: TKey,
 }
-export interface IKeyArray {
-	key: TKeyArray
+export interface IKeyQueryItem {
+	key?: TKey | TKeyArray,
 }
 
 // Expose the base model class.
 export abstract class KeyModel<
-		IEntity extends IKey,
+		IEntity extends IKeyEntity,
 		ICreateValues extends object,
 		IUpdateValues extends object,
-		IQueryItem extends (IKey | IKeyArray)
+		IQueryItem extends IKeyQueryItem
 	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
