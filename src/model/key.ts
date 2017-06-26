@@ -17,12 +17,11 @@ import * as lodash from 'lodash'
 export type TKey = number | string
 export type TKeyArray = number[] | string[]
 
-// Define the interfaces that describe entities and query items containing
-// the table key or an array of table keys.
-interface IKey {
+// Define the interfaces that describe entities and query items containing the table key or an array of table keys.
+export interface IKey {
 	key: TKey
 }
-interface IKeyArray {
+export interface IKeyArray {
 	key: TKeyArray
 }
 
