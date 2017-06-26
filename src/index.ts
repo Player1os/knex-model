@@ -7,6 +7,8 @@ export {
 	IDestroyOptions,
 } from '.../src/model'
 export {
+	IKeyEntity,
+	IKeyQueryItem,
 	KeyModel,
 	TKey,
 	TKeyArray,
