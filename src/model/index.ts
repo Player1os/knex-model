@@ -110,7 +110,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	/**
 	 * All fields present in the underlying data object.
 	 */
-	fieldNames() {
+	fieldNames(this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>) {
 		return Object.keys(this.fields)
 	}
 
@@ -119,7 +119,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async _create(values: ICreateValues[], options: ICreateOptions = {}) {
+	protected async _create(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		values: ICreateValues[],
+		options: ICreateOptions = {},
+	) {
 		try {
 			// Optionally validate the create values.
 			if (!options.isCreateValuesValidationDisabled) {
@@ -166,7 +170,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async _createOne(values: ICreateValues, options: ICreateOptions = {}) {
+	protected async _createOne(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		values: ICreateValues,
+		options: ICreateOptions = {},
+	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Attempt to create the document.
@@ -194,7 +202,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async _find(query: IQueryItem | IQueryItem[], options: IFindOptions = {}) {
+	protected async _find(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		options: IFindOptions = {},
+	) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this._queryValidationSchema.validate(query)
@@ -241,7 +253,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async _findOne(query: IQueryItem | IQueryItem[], options: IFindOptions = {}) {
+	protected async _findOne(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		options: IFindOptions = {},
+	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Attempt to find the document.
@@ -269,7 +285,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async _count(query: IQueryItem | IQueryItem[], options: ICountOptions = {}) {
+	protected async _count(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		options: ICountOptions = {},
+	) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this._queryValidationSchema.validate(query)
@@ -300,7 +320,12 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async _update(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: IUpdateOptions = {}) {
+	protected async _update(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		values: IUpdateValues,
+		options: IUpdateOptions = {},
+	) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this._queryValidationSchema.validate(query)
@@ -340,7 +365,12 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param values
 	 * @param options
 	 */
-	protected async _updateOne(query: IQueryItem | IQueryItem[], values: IUpdateValues, options: IUpdateOptions = {}) {
+	protected async _updateOne(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		values: IUpdateValues,
+		options: IUpdateOptions = {},
+	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Execute the update method with the submitted arguments.
@@ -368,7 +398,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async _destroy(query: IQueryItem | IQueryItem[], options: IDestroyOptions = {}) {
+	protected async _destroy(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		options: IDestroyOptions = {},
+	) {
 		// Optionally validate the query values.
 		if (!options.isQueryValidationDisabled) {
 			const { error } = this._queryValidationSchema.validate(query)
@@ -399,7 +433,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 * @param options
 	 */
-	protected async _destroyOne(query: IQueryItem | IQueryItem[], options: IDestroyOptions = {}) {
+	protected async _destroyOne(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+		options: IDestroyOptions = {},
+	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Execute the destroy method with the submitted arguments.
@@ -427,7 +465,11 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param knexQuery
 	 * @param queryItem
 	 */
-	protected _prepareQueryItemParamters(knexQuery: Knex.QueryBuilder, queryItem: IQueryItem) {
+	protected _prepareQueryItemParamters(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		knexQuery: Knex.QueryBuilder,
+		queryItem: IQueryItem,
+	) {
 		let newKnexQuery = knexQuery
 
 		lodash.forEach(queryItem, (value, key) => {
@@ -466,7 +508,10 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * Prepare a pluggable knex query based on the query parameters.
 	 * @param query
 	 */
-	protected _prepareQueryParameters(query: IQueryItem | IQueryItem[]) {
+	protected _prepareQueryParameters(
+		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		query: IQueryItem | IQueryItem[],
+	) {
 		// Define the initial query builder upon the model's table.
 		let knexQuery = this._knexWrapper.instance(this.table)
 

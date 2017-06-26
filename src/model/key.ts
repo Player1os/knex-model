@@ -81,7 +81,7 @@ export abstract class KeyModel<
 	 * All fields present in the underlying data object, a parameter specifies whether this includes the primary key.
 	 * @param isKeyExcluded Specifies whether the primary key should be present.
 	 */
-	fieldNames(isKeyExcluded?: boolean) {
+	fieldNames(this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>, isKeyExcluded?: boolean) {
 		const baseFieldNames = super.fieldNames()
 		return isKeyExcluded
 			? baseFieldNames.filter((baseFieldName) => {
@@ -95,7 +95,11 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	protected async _findByKey(key: TKey, options: IFindOptions = {}) {
+	protected async _findByKey(
+		this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		key: TKey,
+		options: IFindOptions = {},
+	) {
 		// Call the find one method with only the key in the query.
 		return this._findOne({ key } as IQueryItem, options)
 	}
@@ -106,7 +110,12 @@ export abstract class KeyModel<
 	 * @param values
 	 * @param options
 	 */
-	protected async _updateByKey(key: TKey, values: IUpdateValues, options: IUpdateOptions = {}) {
+	protected async _updateByKey(
+		this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		key: TKey,
+		values: IUpdateValues,
+		options: IUpdateOptions = {},
+	) {
 		// Call the update one method with only the key in the query.
 		return this._updateOne({ key } as IQueryItem, values, options)
 	}
@@ -116,7 +125,11 @@ export abstract class KeyModel<
 	 * @param key
 	 * @param options
 	 */
-	protected async _destroyByKey(key: TKey, options: IDestroyOptions = {}) {
+	protected async _destroyByKey(
+		this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		key: TKey,
+		options: IDestroyOptions = {},
+	) {
 		// Call the destroy one method with only the key in the query.
 		return this._destroyOne({ key } as IQueryItem, options)
 	}
@@ -126,7 +139,11 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	protected async _save(document: IEntity, options: IUpdateOptions = {}) {
+	protected async _save(
+		this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		document: IEntity,
+		options: IUpdateOptions = {},
+	) {
 		// Update the entity with the given document key using the given document values.
 		return this._updateByKey(document.key, lodash.pick(document, this.fieldNames()) as IUpdateValues, options)
 	}
@@ -136,7 +153,11 @@ export abstract class KeyModel<
 	 * @param document
 	 * @param options
 	 */
-	protected async _delete(document: IEntity, options: IDestroyOptions = {}) {
+	protected async _delete(
+		this: KeyModel<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		document: IEntity,
+		options: IDestroyOptions = {},
+	) {
 		// Destroy the entity with the given document key.
 		return this._destroyByKey(document.key, options)
 	}
