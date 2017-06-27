@@ -27,11 +27,11 @@ export interface IKeyQueryItem {
 
 // Expose the base model class.
 export abstract class KeyModel<
-		IEntity extends IKeyEntity,
-		ICreateValues extends object,
-		IUpdateValues extends object,
-		IQueryItem extends IKeyQueryItem
-	> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
+	IEntity extends IKeyEntity,
+	ICreateValues extends object,
+	IUpdateValues extends object,
+	IQueryItem extends IKeyQueryItem
+> extends Model<IEntity, ICreateValues, IUpdateValues, IQueryItem> {
 	/**
 	 * A constructor that confirms that the required properties are present.
 	 * @param knexWrapper The object containing the knex instance.

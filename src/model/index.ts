@@ -45,7 +45,15 @@ export interface IDestroyOptions extends IOptions {
 }
 
 // Expose the base model class.
-export abstract class Model<IEntity extends object, ICreateValues extends object, IUpdateValues extends object, IQueryItem extends object> {
+export abstract class Model<
+	IE extends object,
+	ICV extends object,
+	IICV extends object,
+	IUV extends object,
+	IIUV extends object,
+	IQI extends object,
+	IIQI extends object
+> { // tslint:disable-line:one-line
 	protected readonly _queryValidationSchema: Joi.Schema
 
 	/**
@@ -110,8 +118,175 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	/**
 	 * All fields present in the underlying data object.
 	 */
-	fieldNames(this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>) {
+	public fieldNames(this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>) {
 		return Object.keys(this.fields)
+	}
+
+	/**
+	 *
+	 * @param this
+	 * @param values
+	 * @param options
+	 */
+	public abstract async create(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		values: ICV[],
+		options: ICreateOptions,
+	)
+
+	/**
+	 * Create a single entity of the model.
+	 * @param values
+	 * @param options
+	 */
+	public async createOne(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		values: ICV,
+		options: ICreateOptions = {},
+	) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this._knexWrapper.transaction(async (transaction) => {
+			// Attempt to create the document.
+			const documents = await this.create([values], Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one document was created.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was created.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the first created document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 *
+	 * @param this
+	 * @param values
+	 * @param options
+	 */
+	public abstract async find(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IQI | IQI[],
+		options: IFindOptions,
+	)
+
+	/**
+	 * Find a single entity of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	public async findOne(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IQI | IQI[],
+		options: IFindOptions = {},
+	) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this._knexWrapper.transaction(async (transaction) => {
+			// Attempt to find the document.
+			const documents = await this.find(query, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one document was found.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was found.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the first found document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 *
+	 * @param this
+	 * @param values
+	 * @param options
+	 */
+	public abstract async update(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IQI | IQI[],
+		values: IUV,
+		options: IUpdateOptions,
+	)
+
+	/**
+	 * Update a single entity of the model matching the query with the supplied values.
+	 * @param query
+	 * @param values
+	 * @param options
+	 */
+	public async updateOne(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IQI | IQI[],
+		values: IUV,
+		options: IUpdateOptions = {},
+	) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this._knexWrapper.transaction(async (transaction) => {
+			// Execute the update method with the submitted arguments.
+			const documents = await this.update(query, values, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one value was updated.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was updated.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the updated document.
+			return documents[0]
+		}, options.transaction)
+	}
+
+	/**
+	 * Destroy a single entity of the model matching the query.
+	 * @param query
+	 * @param options
+	 */
+	protected async _destroyOne(
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IQI | IQI[],
+		options: IDestroyOptions = {},
+	) {
+		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
+		return this._knexWrapper.transaction(async (transaction) => {
+			// Execute the destroy method with the submitted arguments.
+			const documents = await this._destroy(query, Object.assign({}, options, {
+				transaction,
+			}))
+
+			// Check if at least one value was deleted.
+			if (documents.length === 0) {
+				throw new EntityNotFoundError()
+			}
+
+			// Check if more than one value was deleted.
+			if (documents.length > 1) {
+				throw new MultipleEntitiesFoundError()
+			}
+
+			// Return the destroyed document.
+			return documents[0]
+		}, options.transaction)
 	}
 
 	/**
@@ -120,8 +295,8 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param options
 	 */
 	protected async _create(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		values: ICreateValues[],
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		values: IICV[],
 		options: ICreateOptions = {},
 	) {
 		try {
@@ -146,7 +321,7 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 			}
 
 			// Execute the prepared query builder.
-			const documents = await knexQuery as IEntity[]
+			const documents = await knexQuery as IE[]
 
 			// Return the created documents.
 			return documents
@@ -166,45 +341,13 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	}
 
 	/**
-	 * Create a single entity of the model.
-	 * @param values
-	 * @param options
-	 */
-	protected async _createOne(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		values: ICreateValues,
-		options: ICreateOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Attempt to create the document.
-			const documents = await this._create([values], Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one document was created.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was created.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the first created document.
-			return documents[0]
-		}, options.transaction)
-	}
-
-	/**
 	 * Find all entities of the model matching the query.
 	 * @param query
 	 * @param options
 	 */
 	protected async _find(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IIQI | IIQI[],
 		options: IFindOptions = {},
 	) {
 		// Optionally validate the query values.
@@ -242,42 +385,10 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 		}
 
 		// Execute the prepared query builder.
-		const documents = await knexQuery as IEntity[]
+		const documents = await knexQuery as IE[]
 
 		// Return the found documents.
 		return documents
-	}
-
-	/**
-	 * Find a single entity of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async _findOne(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
-		options: IFindOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Attempt to find the document.
-			const documents = await this._find(query, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one document was found.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was found.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the first found document.
-			return documents[0]
-		}, options.transaction)
 	}
 
 	/**
@@ -286,8 +397,8 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param options
 	 */
 	protected async _count(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IIQI | IIQI[],
 		options: ICountOptions = {},
 	) {
 		// Optionally validate the query values.
@@ -321,9 +432,9 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param options
 	 */
 	protected async _update(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
-		values: IUpdateValues,
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IIQI | IIQI[],
+		values: IIUV,
 		options: IUpdateOptions = {},
 	) {
 		// Optionally validate the query values.
@@ -353,44 +464,10 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as IEntity[]
+		const documents = await knexQuery as IE[]
 
 		// Return the updated documents.
 		return documents
-	}
-
-	/**
-	 * Update a single entity of the model matching the query with the supplied values.
-	 * @param query
-	 * @param values
-	 * @param options
-	 */
-	protected async _updateOne(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
-		values: IUpdateValues,
-		options: IUpdateOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Execute the update method with the submitted arguments.
-			const documents = await this._update(query, values, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one value was updated.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was updated.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the updated document.
-			return documents[0]
-		}, options.transaction)
 	}
 
 	/**
@@ -399,8 +476,8 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param options
 	 */
 	protected async _destroy(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IIQI | IIQI[],
 		options: IDestroyOptions = {},
 	) {
 		// Optionally validate the query values.
@@ -422,42 +499,10 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as IEntity[]
+		const documents = await knexQuery as IE[]
 
 		// Return the destroyed documents.
 		return documents
-	}
-
-	/**
-	 * Destroy a single entity of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	protected async _destroyOne(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
-		options: IDestroyOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Execute the destroy method with the submitted arguments.
-			const documents = await this._destroy(query, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one value was deleted.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was deleted.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the destroyed document.
-			return documents[0]
-		}, options.transaction)
 	}
 
 	/**
@@ -466,9 +511,9 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param queryItem
 	 */
 	protected _prepareQueryItemParamters(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
 		knexQuery: Knex.QueryBuilder,
-		queryItem: IQueryItem,
+		queryItem: IIQI,
 	) {
 		let newKnexQuery = knexQuery
 
@@ -509,8 +554,8 @@ export abstract class Model<IEntity extends object, ICreateValues extends object
 	 * @param query
 	 */
 	protected _prepareQueryParameters(
-		this: Model<IEntity, ICreateValues, IUpdateValues, IQueryItem>,
-		query: IQueryItem | IQueryItem[],
+		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		query: IIQI | IIQI[],
 	) {
 		// Define the initial query builder upon the model's table.
 		let knexQuery = this._knexWrapper.instance(this.table)
