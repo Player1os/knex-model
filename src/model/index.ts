@@ -7,7 +7,6 @@ import MultipleEntitiesFoundError from '.../src/error/multiple_entities_found'
 import { KnexWrapper } from '@player1os/knex-wrapper'
 
 // Load npm modules.
-import * as Joi from 'joi'
 import * as Knex from 'knex'
 import * as lodash from 'lodash'
 
@@ -15,305 +14,165 @@ import * as lodash from 'lodash'
 // TODO: Add pagination.
 // TODO: Add relations.
 // TODO: Add column aliasing.
-// TODO: Add projection to all methods.
 
 // Declare and expose the interfaces for options.
 export interface IOptions {
 	transaction?: Knex.Transaction,
 }
-export interface ICreateOptions extends IOptions {
-	isCreateValuesValidationDisabled?: boolean,
+export interface IReturningOptions extends IOptions {
+	returningFields?: string[],
 }
 export interface IFindOptions extends IOptions {
-	isQueryValidationDisabled?: boolean,
+	fields?: string[],
 	orderBy?: [{
 		column: string,
 		direction: string,
 	}],
+	page?: {
+		size: number,
+		number: number,
+	},
 	limit?: number,
 	offset?: number,
-}
-export interface ICountOptions extends IOptions {
-	isQueryValidationDisabled?: boolean,
-}
-export interface IUpdateOptions extends IOptions {
-	isQueryValidationDisabled?: boolean,
-	isUpdateValuesValidationDisabled?: boolean,
-}
-export interface IDestroyOptions extends IOptions {
-	isQueryValidationDisabled?: boolean,
 }
 
 // Expose the base model class.
 export abstract class Model<
-	IE extends object,
-	ICV extends object,
-	IICV extends object,
-	IUV extends object,
-	IIUV extends object,
-	IQI extends object,
-	IIQI extends object
+	IEntity extends object,
+	ICreateInput extends object,
+	IUpdateInput extends object,
+	IQueryItemInput extends object
 > { // tslint:disable-line:one-line
-	protected readonly _queryValidationSchema: Joi.Schema
-
 	/**
 	 * A constructor that confirms that the required properties are present.
-	 * @param knexWrapper The object containing the knex instance.
-	 * @param table The name of the underlying table.
-	 * @param fields The names and validation schemas of the table's fields.
+	 * @param _knexWrapper The wrapper containing the knex instance.
+	 * @param tableName The name of the underlying table.
+	 * @param fieldNames The names of the underlying table's fields.
 	 */
 	constructor(
 		protected readonly _knexWrapper: KnexWrapper,
-		public readonly table: string,
-		public readonly fields: {
-			[fieldName: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema | Joi.ObjectSchema | Joi.DateSchema,
-		},
-		protected readonly _createValuesValidationSchema: Joi.ObjectSchema,
-		protected readonly _updateValuesValidationSchema: Joi.ObjectSchema,
+		public readonly tableName: string,
+		public readonly fieldNames: string[],
 	) {
-		// Verify whether a table name is set.
-		if (!this.table) {
-			throw new Error('No table name was set in the model.')
+		// Verify whether the table name is non-empty.
+		if (!this.tableName) {
+			throw new Error('The table name is empty.')
 		}
-
-		// Verify whether a fields object is set.
-		if (!this.fields) {
-			throw new Error('No fields object was set in the model.')
-		}
-
-		// Define the validation schema for a single query item.
-		let queryItemValidationSchema = Joi.object(lodash.reduce(this.fields, (map, fieldValidationSchema, fieldName) => {
-			// Allow value or array of values in a positive and negated version of the field.
-			map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
-				fieldValidationSchema,
-				Joi.array().items(fieldValidationSchema),
-			])
-
-			// Return the augumented map.
-			return map
-		}, {}))
-
-		// Define an exclusive relationships between each field key and its negation.
-		Object.keys(this.fields).forEach((fieldName) => {
-			queryItemValidationSchema.xor(fieldName, `!${fieldName}`)
-		})
-
-		// Setup the keys to be optional.
-		queryItemValidationSchema = queryItemValidationSchema.options({
-			presence: 'optional',
-		})
-
-		// Outputs the schema for the query during model extension.
-		// - all specified keys must correspond to (fields + primary key field).
-		// - all present (fields + primary key field) must conform to the given rules.
-		this._queryValidationSchema = Joi.alternatives([
-			queryItemValidationSchema,
-			Joi.array().items(queryItemValidationSchema),
-		]).required().options({
-			abortEarly: false,
-			convert: false,
-		})
-	}
-
-	/**
-	 * All fields present in the underlying data object.
-	 */
-	public fieldNames(this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>) {
-		return Object.keys(this.fields)
 	}
 
 	/**
 	 *
-	 * @param this
+	 * @param this An instance of the model itself.
 	 * @param values
-	 * @param options
-	 */
-	public abstract async create(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		values: ICV[],
-		options: ICreateOptions,
-	)
-
-	/**
-	 * Create a single entity of the model.
-	 * @param values
-	 * @param options
-	 */
-	public async createOne(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		values: ICV,
-		options: ICreateOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Attempt to create the document.
-			const documents = await this.create([values], Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one document was created.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was created.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the first created document.
-			return documents[0]
-		}, options.transaction)
-	}
-
-	/**
-	 *
-	 * @param this
-	 * @param values
-	 * @param options
-	 */
-	public abstract async find(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IQI | IQI[],
-		options: IFindOptions,
-	)
-
-	/**
-	 * Find a single entity of the model matching the query.
-	 * @param query
-	 * @param options
-	 */
-	public async findOne(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IQI | IQI[],
-		options: IFindOptions = {},
-	) {
-		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
-		return this._knexWrapper.transaction(async (transaction) => {
-			// Attempt to find the document.
-			const documents = await this.find(query, Object.assign({}, options, {
-				transaction,
-			}))
-
-			// Check if at least one document was found.
-			if (documents.length === 0) {
-				throw new EntityNotFoundError()
-			}
-
-			// Check if more than one value was found.
-			if (documents.length > 1) {
-				throw new MultipleEntitiesFoundError()
-			}
-
-			// Return the first found document.
-			return documents[0]
-		}, options.transaction)
-	}
-
-	/**
-	 *
-	 * @param this
-	 * @param values
-	 * @param options
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	public abstract async update(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IQI | IQI[],
-		values: IUV,
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
+		values: IUpdateInput,
 		options: IUpdateOptions,
 	)
 
 	/**
 	 * Update a single entity of the model matching the query with the supplied values.
-	 * @param query
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
 	 * @param values
-	 * @param options
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	public async updateOne(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IQI | IQI[],
-		values: IUV,
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
+		values: IUpdateInput,
 		options: IUpdateOptions = {},
 	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Execute the update method with the submitted arguments.
-			const documents = await this.update(query, values, Object.assign({}, options, {
+			const entities = await this.update(query, values, Object.assign({}, options, {
 				transaction,
 			}))
 
 			// Check if at least one value was updated.
-			if (documents.length === 0) {
+			if (entities.length === 0) {
 				throw new EntityNotFoundError()
 			}
 
 			// Check if more than one value was updated.
-			if (documents.length > 1) {
+			if (entities.length > 1) {
 				throw new MultipleEntitiesFoundError()
 			}
 
-			// Return the updated document.
-			return documents[0]
+			// Return the updated entity.
+			return entities[0]
 		}, options.transaction)
 	}
 
 	/**
-	 * Destroy a single entity of the model matching the query.
-	 * @param query
-	 * @param options
+	 *
+	 * @param this An instance of the model itself.
+	 * @param values
+	 * @param options Parameters for the underlying query and validation.
 	 */
-	protected async _destroyOne(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IQI | IQI[],
+	public abstract async destroy(
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
+		options: IDestroyOptions,
+	)
+
+	/**
+	 * Destroy a single entity of the model matching the query.
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
+	 * @param options Parameters for the underlying query and validation.
+	 */
+	protected async destroyOne(
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
 		options: IDestroyOptions = {},
 	) {
 		// Enclose in a transaction to ensure changes are reverted if an error is thrown from within and return its result.
 		return this._knexWrapper.transaction(async (transaction) => {
 			// Execute the destroy method with the submitted arguments.
-			const documents = await this._destroy(query, Object.assign({}, options, {
+			const entities = await this.destroy(query, Object.assign({}, options, {
 				transaction,
 			}))
 
 			// Check if at least one value was deleted.
-			if (documents.length === 0) {
+			if (entities.length === 0) {
 				throw new EntityNotFoundError()
 			}
 
 			// Check if more than one value was deleted.
-			if (documents.length > 1) {
+			if (entities.length > 1) {
 				throw new MultipleEntitiesFoundError()
 			}
 
-			// Return the destroyed document.
-			return documents[0]
+			// Return the destroyed entity.
+			return entities[0]
 		}, options.transaction)
 	}
 
 	/**
 	 * Create entities of the model using the provided values.
-	 * @param values
-	 * @param options
+	 * @param this An instance of the model itself.
+	 * @param values The query that describes the where clause to be built.
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	protected async _create(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		values: IICV[],
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		values: ICreateInput | ICreateInput[],
 		options: ICreateOptions = {},
 	) {
 		try {
-			// Optionally validate the create values.
-			if (!options.isCreateValuesValidationDisabled) {
-				values.forEach((valuesEntry) => {
-					const { error } = this._createValuesValidationSchema.validate(valuesEntry)
-					if (error) {
-						throw error
-					}
-				})
-			}
-
 			// Prepare an insertion query builder.
-			let knexQuery = this._knexWrapper.instance(this.table)
+			let knexQuery = this._knexWrapper.instance(this.tableName)
 				.insert(values)
-				.returning(this.fieldNames())
+
+			// Optionally enable the returning of created entities.
+			if (options.isReturningEnabled) {
+				knexQuery = knexQuery.returning(this.fieldNames)
+			}
 
 			// Optionally use the supplied transaction.
 			if (options.transaction) {
@@ -321,16 +180,17 @@ export abstract class Model<
 			}
 
 			// Execute the prepared query builder.
-			const documents = await knexQuery as IE[]
+			const entities = await (knexQuery as PromiseLike<any>) as IEntity[]
 
-			// Return the created documents.
-			return documents
+			// Return the created entities.
+			return entities
 		} catch (err) {
 			// Attempt to better identify the error.
 			switch (err.code) {
 				case '23505':
-					// Encapsulate in an entity exists error and throw it.
+					// Encapsulate unique constraint violation in an entity exists error and throw it.
 					throw new EntityExistsError(err)
+					// TODO: Add Encapsulate foreign constraint violation in an entity foreign key missing error and throw it.
 				// TODO: Catch error for other issues.
 				// 22P02 => invalid input syntax for integer
 				default:
@@ -342,73 +202,56 @@ export abstract class Model<
 
 	/**
 	 * Find all entities of the model matching the query.
-	 * @param query
-	 * @param options
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
+	 * @param options Parameters for the underlying query and validation.
 	 */
-	protected async _find(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IIQI | IIQI[],
+	protected _find(
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
 		options: IFindOptions = {},
 	) {
-		// Optionally validate the query values.
-		if (!options.isQueryValidationDisabled) {
-			const { error } = this._queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
 		// Prepare a selection query builder.
-		let knexQuery = this._prepareQueryParameters(query)
-			.select(this.fieldNames())
+		let knexQueryBuilder = this._prepareQueryParameters(query)
+			.select(this.fieldNames)
 
 		// Add the optional order by clause.
 		if (options.orderBy) {
 			options.orderBy.forEach((orderByClause) => {
-				knexQuery = knexQuery.orderBy(orderByClause.column, orderByClause.direction)
+				knexQueryBuilder = knexQueryBuilder.orderBy(orderByClause.column, orderByClause.direction)
 			})
 		}
 
 		// Add the optional limit clause.
 		if (options.limit) {
-			knexQuery = knexQuery.limit(options.limit)
+			knexQueryBuilder = knexQueryBuilder.limit(options.limit)
 		}
 
 		// Add the optional offset clause.
 		if (options.offset) {
-			knexQuery = knexQuery.offset(options.offset)
+			knexQueryBuilder = knexQueryBuilder.offset(options.offset)
 		}
 
 		// Optionally use the supplied transaction.
 		if (options.transaction) {
-			knexQuery = knexQuery.transacting(options.transaction)
+			knexQueryBuilder = knexQueryBuilder.transacting(options.transaction)
 		}
 
-		// Execute the prepared query builder.
-		const documents = await knexQuery as IE[]
-
-		// Return the found documents.
-		return documents
+		// Return the prepared query builder.
+		return knexQueryBuilder
 	}
 
 	/**
 	 * Find the count of all entities of the model matching the query.
-	 * @param query
-	 * @param options
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	protected async _count(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IIQI | IIQI[],
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
 		options: ICountOptions = {},
 	) {
-		// Optionally validate the query values.
-		if (!options.isQueryValidationDisabled) {
-			const { error } = this._queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
 		// Prepare a selection query builder.
 		let knexQuery = this._prepareQueryParameters(query)
 			.count()
@@ -419,7 +262,7 @@ export abstract class Model<
 		}
 
 		// Execute the prepared query builder.
-		const result = await knexQuery
+		const result = await (knexQuery as PromiseLike<any>)
 
 		// Parse the result of the count query.
 		return parseInt(result[0].count, 10)
@@ -427,36 +270,25 @@ export abstract class Model<
 
 	/**
 	 * Update all entities of the model matching the query with the supplied values.
-	 * @param query
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
 	 * @param values
-	 * @param options
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	protected async _update(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IIQI | IIQI[],
-		values: IIUV,
-		options: IUpdateOptions = {},
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
+		values: IUpdateInput,
+		options: IReturningOptions = {},
 	) {
-		// Optionally validate the query values.
-		if (!options.isQueryValidationDisabled) {
-			const { error } = this._queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
-		// Optionally validate the update values.
-		if (!options.isUpdateValuesValidationDisabled) {
-			const { error } = this._updateValuesValidationSchema.validate(values)
-			if (error) {
-				throw error
-			}
-		}
-
 		// Prepare an update query builder.
 		let knexQuery = this._prepareQueryParameters(query)
 			.update(values)
-			.returning(this.fieldNames())
+
+		// Optionally enable the returning of created entities.
+		if (options.isReturningFields) {
+			knexQuery = knexQuery.returning(this.fieldNames)
+		}
 
 		// Optionally use the supplied transaction.
 		if (options.transaction) {
@@ -464,34 +296,31 @@ export abstract class Model<
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as IE[]
+		const entities = await (knexQuery as PromiseLike<any>) as IEntity[]
 
-		// Return the updated documents.
-		return documents
+		// Return the updated entities.
+		return entities
 	}
 
 	/**
 	 * Destroy all entities of the model matching the query.
-	 * @param query
-	 * @param options
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
+	 * @param options Parameters for the underlying query and validation.
 	 */
 	protected async _destroy(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IIQI | IIQI[],
-		options: IDestroyOptions = {},
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
+		options: IReturningOptions = {},
 	) {
-		// Optionally validate the query values.
-		if (!options.isQueryValidationDisabled) {
-			const { error } = this._queryValidationSchema.validate(query)
-			if (error) {
-				throw error
-			}
-		}
-
 		// Prepare a deletion query builder.
 		let knexQuery = this._prepareQueryParameters(query)
 			.delete()
-			.returning(this.fieldNames())
+
+		// Optionally enable the returning of created entities.
+		if (options.isReturningEnabled) {
+			knexQuery = knexQuery.returning(this.fieldNames)
+		}
 
 		// Optionally use the supplied transaction.
 		if (options.transaction) {
@@ -499,21 +328,22 @@ export abstract class Model<
 		}
 
 		// Return the prepared query builder.
-		const documents = await knexQuery as IE[]
+		const entities = await (knexQuery as PromiseLike<any>) as IEntity[]
 
-		// Return the destroyed documents.
-		return documents
+		// Return the destroyed entities.
+		return entities
 	}
 
 	/**
 	 * Prepare a manipulator for a single knex query item.
-	 * @param knexQuery
-	 * @param queryItem
+	 * @param this An instance of the model itself.
+	 * @param knexQuery The knex query builder to be augumented.
+	 * @param queryItem The query item that describes the where clause addition.
 	 */
 	protected _prepareQueryItemParamters(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
 		knexQuery: Knex.QueryBuilder,
-		queryItem: IIQI,
+		queryItem: IQueryItemInput,
 	) {
 		let newKnexQuery = knexQuery
 
@@ -551,14 +381,15 @@ export abstract class Model<
 
 	/**
 	 * Prepare a pluggable knex query based on the query parameters.
-	 * @param query
+	 * @param this An instance of the model itself.
+	 * @param query The query that describes the where clause to be built.
 	 */
 	protected _prepareQueryParameters(
-		this: Model<IE, ICV, IICV, IUV, IIUV, IQI, IIQI>,
-		query: IIQI | IIQI[],
+		this: Model<IEntity, ICreateInput, IUpdateInput, IQueryItemInput>,
+		query: IQueryItemInput | IQueryItemInput[],
 	) {
 		// Define the initial query builder upon the model's table.
-		let knexQuery = this._knexWrapper.instance(this.table)
+		let knexQuery = this._knexWrapper.instance(this.tableName)
 
 		// Add filters using the submitted query.
 		if (lodash.isArray(query)) {
