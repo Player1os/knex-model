@@ -4,10 +4,10 @@ import BaseError from '@player1os/base-error'
 // Load npm modules.
 import * as Joi from 'joi'
 
-// Expose error class.
+// Expose the error class.
 export default class ValidationError extends BaseError {
-	public input: any
-	public detail: {}
+	public readonly input: any
+	public readonly detail: {}
 
 	constructor(joiValidationResult: Joi.ValidationResult<any>) {
 		// Call the parent constructor.
@@ -25,7 +25,6 @@ export default class ValidationError extends BaseError {
 				type: joiErrorItem.type,
 				message: joiErrorItem.message,
 			}
-
 			return map
 		}, {})
 	}

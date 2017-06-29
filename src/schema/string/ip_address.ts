@@ -105,9 +105,8 @@ const validationRegExp = new RegExp(''
 )
 */
 
-export default {
-	// validationSchema: Joi.string().regex(validationRegExp, 'ip-address'),
-	validationSchema: Joi.string().ip({
-		version: ['ipv4', 'ipv6'],
-	}),
-}
+// Expose the validation schema.
+// TODO: Verify if it should be replaced with `Joi.string().regex(validationRegExp, 'ip-address')`.
+export default Joi.string().ip({
+	version: ['ipv4', 'ipv6'],
+})

@@ -1,5 +1,5 @@
 // Load app modules.
-import ValidationError from '.../src/lib/error/validation'
+import ValidationError from '.../src/error'
 
 // Load npm modules.
 import * as Joi from 'joi'

@@ -1,40 +1,27 @@
-// Load npm modules.
-import * as Joi from 'joi'
+// Load the app modules.
+import validate from '.../src/validate'
 
-// Define and expose the query validation schema generator.
-export const queryValidationSchemaGenerator = (queryItemFieldValidationSchemas: {
-	[fieldName: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema | Joi.ObjectSchema | Joi.DateSchema,
-}) => {
-	// Define the validation schema for a single query item.
-	let queryItemValidationSchema = Joi.object(lodash.reduce(queryItemFieldValidationSchemas, (map, fieldValidationSchema, fieldName) => {
-		// Allow value or array of values in a positive and negated version of the field.
-		map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
-			fieldValidationSchema,
-			Joi.array().items(fieldValidationSchema),
-		])
+// Expose the schemas.
+export { default as booleanSchema } from '.../src/schema/boolean'
+export { default as dateSchema } from '.../src/schema/date'
+export { default as filterExpressionSchema } from '.../src/schema/filter_expression'
+export { default as bigIntegerKeySchema } from '.../src/schema/key/big_integer'
+export { default as integerKeySchema } from '.../src/schema/key/integer'
+export { default as nonNegativeBigIntegerNumberSchema } from '.../src/schema/number/non_negative_big_integer'
+export { default as nonNegativeIntegerNumberSchema } from '.../src/schema/number/non_negative_integer'
+export { default as labelStringValueObjectSchema } from '.../src/schema/object/label_string_value'
+export { default as anyStringSchema } from '.../src/schema/string/any'
+export { default as descriptionStringSchema } from '.../src/schema/string/description'
+export { default as emailStringSchema } from '.../src/schema/string/email'
+export { default as hashStringSchema } from '.../src/schema/string/hash'
+export { default as httpUriStringSchema } from '.../src/schema/string/http_uri'
+export { default as ipAddressStringSchema } from '.../src/schema/string/ip_address'
+export { default as labelStringSchema } from '.../src/schema/string/label'
+export { default as tokenStringSchema } from '.../src/schema/string/token'
+export { default as webTokenStringSchema } from '.../src/schema/string/web_token'
 
-		// Return the augumented map.
-		return map
-	}, {}))
+// Expose the error class.
+export { default as ValidationError } from '.../src/error'
 
-	// Define an exclusive relationships between each field key and its negation.
-	Object.keys(queryItemFieldValidationSchemas).forEach((fieldName) => {
-		queryItemValidationSchema.xor(fieldName, `!${fieldName}`)
-	})
-
-	// Setup the keys to be optional.
-	queryItemValidationSchema = queryItemValidationSchema.options({
-		presence: 'optional',
-	})
-
-	// Outputs the schema for the query during model extension.
-	// - all specified keys must correspond to (fields + primary key field).
-	// - all present (fields + primary key field) must conform to the given rules.
-	return Joi.alternatives([
-		queryItemValidationSchema,
-		Joi.array().items(queryItemValidationSchema),
-	]).required().options({
-		abortEarly: false,
-		convert: false,
-	})
-}
+// Expose the validate function.
+export default validate
