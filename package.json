@@ -1,6 +1,6 @@
 {
   "name": "@player1os/joi-wrapper",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A wrapper for the joi module that throws errors when it occurs, containing data type schemas as well.",
   "private": false,
   "main": "index.js",
