@@ -7,6 +7,7 @@
 	},
 	"compilerOptions": {
 		"baseUrl": ".",
+		"experimentalDecorators": true,
 		"module": "commonjs",
 		"noImplicitAny": false,
 		"noImplicitThis": true,
