@@ -2,4 +2,4 @@
 import * as Joi from 'joi'
 
 // Expose the validation schema.
-export default Joi.string().min(1)
+export default Joi.string()

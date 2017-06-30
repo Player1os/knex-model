@@ -4,7 +4,7 @@ import validate from '.../src/validate'
 // Expose the schemas.
 export { default as booleanSchema } from '.../src/schema/boolean'
 export { default as dateSchema } from '.../src/schema/date'
-export { default as filterExpressionSchema } from '.../src/schema/filter_expression'
+export { default as filterExpressionItemSchema } from '.../src/schema/filter_expression_item'
 export { default as bigIntegerKeySchema } from '.../src/schema/key/big_integer'
 export { default as integerKeySchema } from '.../src/schema/key/integer'
 export { default as nonNegativeBigIntegerNumberSchema } from '.../src/schema/number/non_negative_big_integer'
@@ -21,7 +21,10 @@ export { default as tokenStringSchema } from '.../src/schema/string/token'
 export { default as webTokenStringSchema } from '.../src/schema/string/web_token'
 
 // Expose the error class.
-export { default as ValidationError } from '.../src/error'
+export {
+	IDetailItem as IValidationErrorDetailItem,
+	default as ValidationError,
+} from '.../src/error'
 
 // Expose the validate function.
 export default validate
