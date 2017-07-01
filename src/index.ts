@@ -14,7 +14,7 @@ export { default as requiredKeysObjectSchema } from '.../src/schema/object/requi
 export { default as parsedValidationErrorSchema } from '.../src/schema/parsed_validation_error'
 export { default as anyStringSchema } from '.../src/schema/string/any'
 export { default as descriptionStringSchema } from '.../src/schema/string/description'
-export { default as emailStringSchema } from '.../src/schema/string/email'
+export { default as emailAddressStringSchema } from '.../src/schema/string/email_address'
 export { default as hashStringSchema } from '.../src/schema/string/hash'
 export { default as httpUriStringSchema } from '.../src/schema/string/http_uri'
 export { default as ipAddressStringSchema } from '.../src/schema/string/ip_address'

@@ -13,6 +13,7 @@ import * as Joi from 'joi'
 // 	+ '$',
 // 	'i',
 // )
+// 'Must be a valid email address'
 
 // Expose the validation schema.
 export default Joi.string().email().max(256)
