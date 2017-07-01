@@ -2,24 +2,28 @@
 import * as Joi from 'joi'
 import * as lodash from 'lodash'
 
-// Define and expose the validation schema generator.
-export default (filterExpressionItemSchemas: {
+/**
+ * Generates a validation schema for a filter expression based on the supplied validation schema map.
+ * @param filterExpressionItemSchemaMap An object containing a key => value mapping for each field's validation schema.
+ */
+export default (filterExpressionItemSchemaMap: {
 	[fieldName: string]: Joi.BooleanSchema | Joi.NumberSchema | Joi.StringSchema | Joi.ObjectSchema | Joi.DateSchema,
 }) => {
 	// Define the validation schema for a single query item.
-	let filterExpressionItemSchema = Joi.object(lodash.reduce(filterExpressionItemSchemas, (map, fieldValidationSchema, fieldName) => {
-		// Allow value or array of values in a positive and negated version of the field.
-		map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
-			fieldValidationSchema,
-			Joi.array().items(fieldValidationSchema),
-		])
+	let filterExpressionItemSchema = Joi.object(
+		lodash.reduce(filterExpressionItemSchemaMap, (map, fieldValidationSchema, fieldName: string) => {
+			// Allow value or array of values in a positive and negated version of the field.
+			map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
+				fieldValidationSchema,
+				Joi.array().items(fieldValidationSchema),
+			])
 
-		// Return the augumented map.
-		return map
-	}, {}))
+			// Return the augumented map.
+			return map
+		}, {}))
 
 	// Define an exclusive relationships between each field key and its negation.
-	Object.keys(filterExpressionItemSchemas).forEach((fieldName) => {
+	Object.keys(filterExpressionItemSchemaMap).forEach((fieldName) => {
 		filterExpressionItemSchema.xor(fieldName, `!${fieldName}`)
 	})
 
