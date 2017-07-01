@@ -1,17 +1,20 @@
-// Load app modules.
-import ValidationError from '.../src/error'
-
 // Load npm modules.
 import * as Joi from 'joi'
 
-// Expose the wrapper funtion.
-export default (input: any, schema: Joi.AnySchema<any>) => {
-	const validationResult = schema.validate(input, {
+/**
+ * Asserts the value against the submitted schema. Befor validation, adds the following options:
+ * {
+ *   abortEarly: false,
+ *   convert: false,
+ *   presence: 'required',
+ * }
+ * @param value A value to be validated.
+ * @param schema A joi schema to use for the validation.
+ */
+export default (value: any, schema: Joi.Schema) => {
+	Joi.assert(value, schema.options({
 		abortEarly: false,
 		convert: false,
 		presence: 'required',
-	})
-	if (validationResult.error) {
-		throw new ValidationError(validationResult)
-	}
+	}))
 }
