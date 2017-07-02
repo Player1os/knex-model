@@ -1,7 +1,7 @@
 {
-  "name": "@player1os/joi-wrapper",
-  "version": "2.1.1",
-  "description": "A wrapper for the joi module that throws errors when it occurs, containing data type schemas as well.",
+  "name": "@player1os/joi-utility",
+  "version": "1.0.0",
+  "description": "A utility for the joi module that throws errors when it occurs, containing data type schemas as well.",
   "private": false,
   "main": "index.js",
   "types": "types/index.d.ts",
@@ -25,18 +25,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Player1os/node-js-knex-model.git"
+    "url": "git+https://github.com/Player1os/node-js-joi-utility.git"
   },
   "keywords": [
-    "knex",
-    "model"
+    "joi",
+    "utility"
   ],
   "author": "Osama Hassanein <player1os@gmail.com>",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Player1os/node-js-knex-model/issues"
+    "url": "https://github.com/Player1os/node-js-joi-utility/issues"
   },
-  "homepage": "https://github.com/Player1os/node-js-knex-model#readme",
+  "homepage": "https://github.com/Player1os/node-js-joi-utility#readme",
   "dependencies": {
     "joi": "^10.5.2",
     "lodash": "^4.17.4"
