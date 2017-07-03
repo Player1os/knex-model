@@ -14,7 +14,7 @@ import * as Joi from 'joi'
  * @param value A value to be validated.
  * @param schema A joi schema to use for the validation.
  */
-export default (value: any, schema: Joi.Schema) => {
+export default (value: any, schema: Joi.Schema | Joi.SchemaMap) => {
 	// Execute the validation.
 	const { error } = Joi.validate(value, schema, {
 		abortEarly: false,
