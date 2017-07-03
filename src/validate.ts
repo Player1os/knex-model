@@ -1,3 +1,6 @@
+// Load app modules.
+import ValidationError from '.../src/error'
+
 // Load npm modules.
 import * as Joi from 'joi'
 
@@ -12,9 +15,16 @@ import * as Joi from 'joi'
  * @param schema A joi schema to use for the validation.
  */
 export default (value: any, schema: Joi.Schema) => {
-	Joi.assert(value, schema.options({
+	// Execute the validation.
+	const { error } = Joi.validate(value, schema, {
 		abortEarly: false,
 		convert: false,
 		presence: 'required',
-	}))
+	})
+
+	// Check if an error was detected.
+	if (error) {
+		// Rethrow as a valiadtion error.
+		throw new ValidationError(error)
+	}
 }
