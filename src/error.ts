@@ -38,14 +38,12 @@ export default class ValidationError extends BaseError {
 
 		// Fill the details object.
 		this.details = joiValidationError.details.reduce((map, joiValidationErrorItem) => {
-			// Determin the path within the original value.
-			const path = (value instanceof Object) && (joiValidationErrorItem.path in value)
-				? joiValidationErrorItem.path
-				: ''
+			// Store the path within the original value.
+			const path = joiValidationErrorItem.path
 
 			// Parse the error item.
 			const errorItem: IErrorItem = {
-				value: path
+				value: (value instanceof Object) && (path in value)
 					? lodash.get(value, path)
 					: value,
 				type: joiValidationErrorItem.type,
