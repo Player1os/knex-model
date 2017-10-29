@@ -3,7 +3,6 @@
 coverage/
 src/
 test/
-.babelrc
 .gitignore
 .node-version
 README.md
