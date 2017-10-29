@@ -23,7 +23,7 @@ export default (value: any, schema: Joi.Schema | Joi.SchemaMap) => {
 	})
 
 	// Check if an error was detected.
-	if (error) {
+	if (error !== null) {
 		// Rethrow as a valiadtion error.
 		throw new ValidationError(error)
 	}

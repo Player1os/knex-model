@@ -35,7 +35,9 @@ export default class ValidationError extends BaseError {
 		const joiValidationError = errorObject as Joi.ValidationError
 
 		// Copy the message from the joi validation error.
-		super(joiValidationError.message || 'A validation error had occured')
+		super((typeof joiValidationError.message === 'string') && (joiValidationError.message !== '')
+			? joiValidationError.message
+			: 'A validation error had occured')
 
 		if (joiValidationError.isJoi) {
 			// Store the original value, that was validated against.
