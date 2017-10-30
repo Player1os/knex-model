@@ -1,6 +1,0 @@
-{
-	"path-intellisense.mappings": {
-		"...": "${workspaceRoot}"
-	},
-	"typescript.tsdk": "./node_modules/typescript/lib"
-}
