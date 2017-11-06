@@ -65,7 +65,7 @@ export default class ValidationError extends BaseError {
 
 				// Return the accumulated object.
 				return map
-			}, {})
+			}, {} as { [key: string]: IErrorItem[] })
 		} else {
 			this.details = lodash.mapValues(errorObject, (errorObjectItem, errorObjectKey) => {
 				return lodash.isArray(errorObjectItem)

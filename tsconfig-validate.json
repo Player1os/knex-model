@@ -1,0 +1,6 @@
+{
+	"include": [
+		"types"
+	],
+	"extends": "./node_modules/@player1os/tsconfig/index"
+}

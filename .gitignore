@@ -1,7 +1,6 @@
 # Build generated files.
+dist/*
 types/*
-index.js
-index.js.map
 
 # NPM generated files.
 node_modules/*
