@@ -1,6 +1,6 @@
 {
   "name": "@player1os/joi-utility",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A utility for the joi module that throws errors when it occurs, containing data type schemas as well",
   "private": false,
   "main": "dist/index.js",
