@@ -1,4 +1,4 @@
-// Load app modules.
+// Load local modules.
 import ValidationError from '.../src/error'
 
 // Load npm modules.
