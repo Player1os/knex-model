@@ -2,7 +2,7 @@
 import validate from '.../src/validate'
 
 // Expose the parse validation error function.
-export { default as ValidationError } from '.../src/error'
+export { JoiValidationError } from '.../src/error'
 
 // Expose the validate function.
 export default validate

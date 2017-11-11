@@ -1,5 +1,5 @@
 // Load local modules.
-import ValidationError from '.../src/error'
+import { JoiValidationError } from '.../src/error'
 
 // Load npm modules.
 import * as Joi from 'joi'
@@ -25,6 +25,6 @@ export default (value: any, schema: Joi.Schema | Joi.SchemaMap) => {
 	// Check if an error was detected.
 	if (error !== null) {
 		// Rethrow as a valiadtion error.
-		throw new ValidationError(error)
+		throw new JoiValidationError(error)
 	}
 }
