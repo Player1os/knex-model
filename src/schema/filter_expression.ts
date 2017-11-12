@@ -16,11 +16,11 @@ export interface ISchemaMap {
 export default (filterExpressionItemSchemaMap: ISchemaMap) => {
 	// Define the validation schema for a single query item.
 	let filterExpressionItemSchema = Joi.object(
-		lodash.reduce(filterExpressionItemSchemaMap, (map, fieldValidationSchema, fieldName: string) => {
+		lodash.reduce(filterExpressionItemSchemaMap, (map, fieldSchema, fieldName: string) => {
 			// Allow value or array of values in a positive and negated version of the field.
 			map[fieldName] = map[`!${fieldName}`] = Joi.alternatives([
-				fieldValidationSchema,
-				Joi.array().items(fieldValidationSchema),
+				fieldSchema,
+				Joi.array().items(fieldSchema),
 			])
 
 			// Return the augumented map.

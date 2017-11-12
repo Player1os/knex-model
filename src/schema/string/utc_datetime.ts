@@ -27,5 +27,5 @@ export default (options = {
 			'(?:[0-9]{3})', // Millisecond.
 		].join(options.portionDelimiter)
 		+ '$',
-	), 'UTCDateTime').max(256)
+	), 'UTCDateTime').length(23)
 }
