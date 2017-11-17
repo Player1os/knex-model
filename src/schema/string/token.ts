@@ -7,4 +7,4 @@ import * as Joi from 'joi'
 /**
  * A validation schema for token string values.
  */
-export default Joi.string().regex(new RegExp(`^${tokenStringDataType.invalidCharacterRegExpString}+$`), 'TokenString').max(256)
+export default Joi.string().regex(new RegExp(`^${tokenStringDataType.validCharacterRegExpString}+$`), 'TokenString').max(256)

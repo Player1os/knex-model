@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/Player1os/node-js-joi-utility#readme",
   "dependencies": {
-    "@player1os/data-type-utility": "^1.3.0",
+    "@player1os/data-type-utility": "^1.3.1",
     "@player1os/validation-error": "^1.0.0",
     "joi": "^13.0.1",
     "lodash": "^4.17.4"
