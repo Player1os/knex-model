@@ -4,7 +4,6 @@ coverage/
 src/
 test/
 .gitignore
-.node-version
 README.md
 tsconfig-create.json
 tsconfig-validate.json
